@@ -24,6 +24,6 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
-        run: cargo build --verbose
+        run: APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build --verbose
       - name: Run tests
-        run: cargo test --verbose --all-features
+        run: APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo test --verbose --all-features

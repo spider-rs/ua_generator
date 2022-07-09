@@ -16,8 +16,9 @@ fn main() {
 };
 ```
 
+If you plan on using this library or building directly you need a valid API key from the [API Layer User Agent API](https://apilayer.com/marketplace/user_agent-api) and set the value to the env var `APILAYER_KEY`.
+
 ## TODO
 
 1. Update user-agent list via CRON github actions.
 2. Add option to setup native runtime CRON to update list in real time.
-3. Add option to output UA value to a language of choice file for importing.
