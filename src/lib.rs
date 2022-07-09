@@ -19,3 +19,5 @@
 
 /// User agent management.
 pub mod ua;
+/// Auto generated latest User Agents for windows, mac, linux, and android.
+pub mod ua_list;

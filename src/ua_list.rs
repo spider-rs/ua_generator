@@ -1,0 +1,4 @@
+/// user agent list
+pub fn agents() -> Vec<&'static str> {
+    vec!["Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.3; Trident/5.0)", "Mozilla/5.0 (Windows NT 5.1; Win64; x64; rv:46.0) Gecko/20100101 Firefox/46.0", "Mozilla/5.0 (Windows NT 5.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2846.48 Safari/537.36", "Mozilla/5.0 (Android 5.1; Tablet; rv:46.0) Gecko/46.0 Firefox/46.0", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.8; rv:49.0) Gecko/20100101 Firefox/49.0", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2929.77 Safari/537.36", "Mozilla/5.0 (Android 4.4.3; Tablet; rv:46.0) Gecko/46.0 Firefox/46.0", "Mozilla/5.0 (X11; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0", "Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2946.90 Safari/537.36"]
+}

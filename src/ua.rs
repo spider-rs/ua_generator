@@ -1,4 +1,4 @@
-include!(concat!(env!("OUT_DIR"), "/ua_list.rs"));
+pub use crate::ua_list::agents;
 
 /// Get a random UA from the most popular list auto generated from [https://apilayer.com/marketplace/user_agent-api#documentation-tab].
 pub fn spoof_ua() -> String {
@@ -16,9 +16,13 @@ pub fn spoof_ua() -> String {
         srand();
         let random = rand().to_string();
         let random = random.chars().rev().nth(0).unwrap();
-        let random: u32 = random.to_digit(8).unwrap();
+        let random: u32 = random.to_digit(10).unwrap();
 
-        random
+        if random >= 9 {
+            8
+        } else {
+            random
+        }
     };
 
     agent_list[agent as usize].to_owned()
