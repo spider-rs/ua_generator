@@ -1,0 +1,10 @@
+name: Build and Test
+on: [push]
+jobs:
+  run-container:
+    name: End to End
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: "Test Crate"
+        run: cargo test
