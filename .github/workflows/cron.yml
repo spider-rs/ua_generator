@@ -25,7 +25,7 @@ jobs:
       - name: Install Deps
         run: cargo install cargo-bump
       - name: Build and bump
-        run: BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build && cargo bump patch
+        run: cd ua_generator && BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build && cargo bump patch
       - uses: EndBug/add-and-commit@v9
         with:
           message: "chore(agents): update agent list to latest"
