@@ -4,7 +4,11 @@ Generate random real User-Agents to use as spoofs.
 
 ## How to use
 
-Example of generating a randomized user agent. The list is updated every 3 days as a semver patch release.
+Example of generating a randomized user agent updated daily.
+
+```
+cargo add ua_generator --git git@github.com:a11ywatch/ua_generator.git
+```
 
 ```rust
 use ua_generator::ua::spoof_ua;

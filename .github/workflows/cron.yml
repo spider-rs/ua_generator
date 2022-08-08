@@ -1,7 +1,7 @@
 name: Update Crate
 on:
   schedule:
-    - cron: "0 0 */3 * *"
+    - cron: "0 8 * * *"
 env:
   CARGO_TERM_COLOR: always
 
@@ -22,14 +22,10 @@ jobs:
             ~/.cargo/git/db/
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Install Deps
-        run: cargo install cargo-bump
       - name: Build and bump
-        run: cd ua_generator && BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build && cargo bump patch
+        run: cd ua_generator && BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build
       - uses: EndBug/add-and-commit@v9
         with:
           message: "chore(agents): update agent list to latest"
           committer_name: GitHub Actions
           pull: "--rebase --autostash"
-      - name: Publish
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
