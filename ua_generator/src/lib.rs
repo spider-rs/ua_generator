@@ -9,7 +9,6 @@
 //! - **Generate** get a random UA to use.
 //!   - [`spoof_ua`]: https://docs.rs/ua_generator/latest/ua_generator/ua/fn.spoof_ua.html
 //!
-//!
 //! # Basic usage
 //!
 //! First, you will need to add `ua_generator` to your `Cargo.toml`.

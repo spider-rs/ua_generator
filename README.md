@@ -7,7 +7,7 @@ Generate random real User-Agents to use as spoofs.
 Example of generating a randomized user agent updated daily.
 
 ```
-cargo add ua_generator --git git@github.com:a11ywatch/ua_generator.git
+cargo add ua_generator --git https://github.com/a11ywatch/ua_generator.git
 ```
 
 ```rust
