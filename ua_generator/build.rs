@@ -75,9 +75,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let dest_path = Path::new(&"./src").join("ua_list.rs");
 
         let agents = format!(
-            r#"/// user agent list
-pub fn agents() -> Vec<&'static str> {{
-    vec!["{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}", "{}"]
+            r#"/// static list of agents pre-built
+pub const STATIC_AGENTS: &'static [&'static str; 9] = &[
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}"
+];  
+
+/// user agent list
+pub fn agents() -> [&'static str; 9] {{
+    STATIC_AGENTS.to_owned()
 }}
 "#,
             windows_ie_desktop_agent,
