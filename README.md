@@ -23,7 +23,7 @@ fn main() {
 
 The static files are checked and generated from the `build.rs` file to prevent extra need for API calls since they are limited and require authentication.
 
-If you plan on using this building locally you need a valid API key from the [API Layer User Agent API](https://apilayer.com/marketplace/user_agent-api) and set the value to the env var `APILAYER_KEY`. You can run `BUILD_ENABLED=1 APILAYER_KEY=$APILAYER_KEY cargo build` to generate the static files.
+If you plan on using this building locally you need a valid API key from the [API Layer User Agent API](https://apilayer.com/marketplace/user_agent-api) and set the value to the env var `APILAYER_KEY`. You can run `BUILD_ENABLED=1 APILAYER_KEY=$APILAYER_KEY cargo build` to generate the static files. You can also change the API endpoint using the env variable `API_URL`.
 
 ## TODO
 

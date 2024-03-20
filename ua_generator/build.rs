@@ -30,18 +30,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let build_enabled = env::var("BUILD_ENABLED").map(|v| v == "1").unwrap_or(false);
 
     if build_enabled {
+        let base_api = env::var("API_URL").unwrap_or("https://api.apilayer.com/user_agent/generate".into());
+
         // fetch the latest ua and parse to files.
         let token: String = match env::var("APILAYER_KEY") {
             Ok(key) => key,
             Err(_) => {
-                println!("You need a valid https://apilayer.com/ API key to gather agents!");
-
+                println!("You need a valid {} API key to gather agents!", base_api);
                 "".to_string()
             }
         }
         .to_string();
-
-        let base_api = "https://api.apilayer.com/user_agent/generate";
 
         // windows
         let windows_ie_desktop_agent = format!("{base_api}?windows=true&tablet=true&mobile=true&mac=false&linux=false&ie=true&firefox=false&desktop=true&chrome=false&android=false");
