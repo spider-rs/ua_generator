@@ -7,7 +7,7 @@ Generate random real User-Agents to use as spoofs.
 Example of generating a randomized user agent updated weekly.
 
 ```
-cargo add ua_generator --git https://github.com/a11ywatch/ua_generator.git
+cargo add ua_generator --git https://github.com/spider-rs/ua_generator.git
 ```
 
 ```rust
@@ -23,8 +23,4 @@ fn main() {
 
 The static files are checked and generated from the `build.rs` file to prevent extra need for API calls since they are limited and require authentication.
 
-If you plan on using this building locally you need a valid API key from the [API Layer User Agent API](https://apilayer.com/marketplace/user_agent-api) and set the value to the env var `APILAYER_KEY`. You can run `BUILD_ENABLED=1 APILAYER_KEY=$APILAYER_KEY cargo build` to generate the static files. You can also change the API endpoint using the env variable `API_URL`.
-
-## TODO
-
-1. ~~Update user-agent list via CRON github actions~~.
+If you plan on using this building locally you need a valid API key from the [Spider Cloud API](https://spider.cloud/api-keys) and set the value to the env var `APILAYER_KEY`. You can run `BUILD_ENABLED=1 APILAYER_KEY=$APILAYER_KEY cargo build` to generate the static files. You can also change the API endpoint using the env variable `API_URL`.

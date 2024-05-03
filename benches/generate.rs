@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use ua_generator::ua::{spoof_ua};
+use ua_generator::ua::spoof_ua;
 
 /// bench spoof_ua randomizer
 pub fn bench_speed(c: &mut Criterion) {

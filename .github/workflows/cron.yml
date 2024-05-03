@@ -27,5 +27,7 @@ jobs:
       - uses: EndBug/add-and-commit@v9
         with:
           message: "chore(agents): update agent list to latest"
-          committer_name: GitHub Actions
+          committer_name: UA Generator
+          author_name: UA Generator
+          author_email: support@spider.cloud
           pull: "--rebase --autostash"
