@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let build_enabled = env::var("BUILD_ENABLED").map(|v| v == "1").unwrap_or(false);
 
     if build_enabled {
-        let base_api = env::var("API_URL").unwrap_or("https://spider.cloud/api/user-agents".into());
+        let base_api = env::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
 
         // fetch the latest ua and parse to files.
         let token: String = match env::var("APILAYER_KEY") {
