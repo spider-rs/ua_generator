@@ -10,19 +10,23 @@ use ureq::get;
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct ApiResult {
     /// user agent string id
-    ua: String,
+    agent: String,
 }
 
 /// get the agent type for version os
 pub fn get_agent(url: &str, token: &String) -> String {
-    let agent: ApiResult = get(&url)
-        .set("apikey", token)
-        .call()
-        .unwrap()
-        .into_json()
-        .expect("Authorization not granted! Make sure to set a valid API key.");
+    match get(&url).set("apikey", token).call() {
+        Ok(req) => {
+            let req: ApiResult = req
+                .into_json()
+                .expect("Authorization not granted! Make sure to set a valid API key.");
 
-    agent.ua
+            req.agent
+        }
+        Err(e) => {
+            panic!("{:?}", e)
+        }
+    }
 }
 
 /// build entry for setting required agents
@@ -30,7 +34,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let build_enabled = env::var("BUILD_ENABLED").map(|v| v == "1").unwrap_or(false);
 
     if build_enabled {
-        let base_api = env::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
+        let base_api =
+            env::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
 
         // fetch the latest ua and parse to files.
         let token: String = match env::var("APILAYER_KEY") {
