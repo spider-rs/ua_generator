@@ -7,7 +7,7 @@
 //!
 //!
 //! - **Generate** get a random UA to use.
-//!   - [`spoof_ua`]: https://docs.rs/ua_generator/latest/ua_generator/ua/fn.spoof_ua.html
+//!   - [`spoof_ua`]: ua/fn.spoof_ua.html
 //!
 //! # Basic usage
 //!
@@ -21,4 +21,4 @@ pub mod ua;
 /// Auto generated latest User Agents for windows, mac, linux, and android.
 pub mod ua_list;
 
-extern crate fastrand;
+pub extern crate fastrand;
