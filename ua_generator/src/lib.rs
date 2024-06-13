@@ -20,5 +20,7 @@
 pub mod ua;
 /// Auto generated latest User Agents for windows, mac, linux, and android.
 pub mod ua_list;
+/// Auto generated list of real Chrome User Agents.
+pub mod chrome_ua_list;
 
 pub extern crate fastrand;

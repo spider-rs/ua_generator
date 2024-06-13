@@ -1,4 +1,6 @@
 pub use crate::ua_list::STATIC_AGENTS;
+pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
+
 use fastrand;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -6,6 +8,11 @@ use std::rc::Rc;
 /// Get a random UA from a static precompiled list.
 pub fn spoof_ua() -> &'static str {
     STATIC_AGENTS[fastrand::usize(..STATIC_AGENTS.len())]
+}
+
+/// Get a random UA from a static precompiled list.
+pub fn spoof_chrome_ua() -> &'static str {
+    STATIC_CHROME_AGENTS[fastrand::usize(..STATIC_CHROME_AGENTS.len())]
 }
 
 /// Structure to manage a dynamic list of User-Agents, with quick lookup capabilities.
