@@ -1,5 +1,5 @@
-pub use crate::ua_list::STATIC_AGENTS;
 pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
+pub use crate::ua_list::STATIC_AGENTS;
 
 use fastrand;
 use std::collections::HashMap;

@@ -110,7 +110,7 @@ pub fn agents() -> [&'static str; 9] {{
 
         fs::write(&dest_path, agents).unwrap();
 
-        // Build a list of valid chrome user-agents to use for chrome only browsers. 
+        // Build a list of valid chrome user-agents to use for chrome only browsers.
         let chrome_agent_list: Vec<ApiResult> =
             match get(&format!("{base_api}?chrome=true&list=true"))
                 .set("apikey", &token)
@@ -127,7 +127,12 @@ pub fn agents() -> [&'static str; 9] {{
                 }
             };
         let dest_path = Path::new(&"./src").join("chrome_ua_list.rs");
-        let mut chrome_devices = format!("/// List of real Chrome User-Agents.\n Duplicates may be stored to increase chances of getting the most relevant agent.\npub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[\n", chrome_agent_list.len());
+        let mut chrome_devices = format!(
+            r#"/// List of real Chrome User-Agents.
+pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
+"#,
+            chrome_agent_list.len()
+        );
 
         for device in chrome_agent_list {
             chrome_devices.push_str(&format!("    \"{}\",\n", device.agent));
