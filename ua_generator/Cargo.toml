@@ -1,6 +1,6 @@
 [package]
 name = "ua_generator"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2018"
 authors = ["j-mendez <jeff@a11ywatch.com>"]
 description = "Random User Agent Spoofer in Rust."
@@ -19,3 +19,4 @@ fastrand = "2"
 ureq = { version = "2", features = ["json", "charset", "brotli"] }
 serde = { version = "1", features = ["derive"] }
 serde_json =  { version = "1" }
+toml =  { version = "0" }

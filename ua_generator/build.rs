@@ -13,6 +13,46 @@ pub struct ApiResult {
     agent: String,
 }
 
+/// bump the minor
+fn increment_version(version: &str) -> String {
+    let mut parts: Vec<String> = version.split('.').map(String::from).collect(); // Collect into Vec<String> to handle owned strings
+    if let Some(last) = parts.last_mut() {
+        if let Ok(num) = last.parse::<u32>() {
+            *last = (num + 1).to_string(); // Create a new owned String and assign that
+        }
+    }
+    parts.join(".")
+}
+
+fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
+    use serde_json::Value;
+    use std::io::Read;
+    let cargo_toml_path = Path::new("Cargo.toml");
+
+    let mut cargo_toml_content = String::new();
+    crate::fs::OpenOptions::new()
+        .read(true)
+        .open(&cargo_toml_path)?
+        .read_to_string(&mut cargo_toml_content)?;
+
+    let mut parsed_toml: Value = cargo_toml_content.parse()?;
+    if let Some(version) = parsed_toml
+        .get_mut("package")
+        .and_then(|pkg| pkg.get_mut("version"))
+    {
+        if let Some(version_str) = version.as_str() {
+            let new_version = increment_version(version_str);
+            *version = Value::String(new_version.clone());
+            println!("Bumped version to: {}", new_version);
+        }
+    }
+
+    let new_cargo_toml_content = toml::to_string(&parsed_toml)?;
+    fs::write(cargo_toml_path, new_cargo_toml_content)?;
+
+    Ok(())
+}
+
 /// get the agent type for version os
 pub fn get_agent(url: &str, token: &String) -> String {
     match get(&url).set("apikey", token).call() {
@@ -144,6 +184,6 @@ pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
 
         println!("cargo:rerun-if-changed=build.rs");
     }
-
+    bump_version_in_cargo_toml()?;
     Ok(())
 }
