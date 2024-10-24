@@ -2,7 +2,6 @@ extern crate serde;
 extern crate ureq;
 
 use serde::{Deserialize, Serialize};
-use std::env;
 use std::fs;
 use std::path::Path;
 use ureq::get;
@@ -30,25 +29,29 @@ fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
     let cargo_toml_path = Path::new("Cargo.toml");
 
     let mut cargo_toml_content = String::new();
+
     crate::fs::OpenOptions::new()
         .read(true)
         .open(&cargo_toml_path)?
         .read_to_string(&mut cargo_toml_content)?;
 
-    let mut parsed_toml: Value = cargo_toml_content.parse()?;
-    if let Some(version) = parsed_toml
-        .get_mut("package")
-        .and_then(|pkg| pkg.get_mut("version"))
-    {
-        if let Some(version_str) = version.as_str() {
-            let new_version = increment_version(version_str);
-            *version = Value::String(new_version.clone());
-            println!("Bumped version to: {}", new_version);
-        }
-    }
+    if !cargo_toml_content.is_empty() {
+        let mut parsed_toml: Value = cargo_toml_content.parse()?;
 
-    let new_cargo_toml_content = toml::to_string(&parsed_toml)?;
-    fs::write(cargo_toml_path, new_cargo_toml_content)?;
+        if let Some(version) = parsed_toml
+            .get_mut("package")
+            .and_then(|pkg| pkg.get_mut("version"))
+        {
+            if let Some(version_str) = version.as_str() {
+                let new_version = increment_version(version_str);
+                *version = Value::String(new_version.clone());
+                println!("Bumped version to: {}", new_version);
+            }
+        }
+
+        let new_cargo_toml_content = toml::to_string(&parsed_toml)?;
+        fs::write(cargo_toml_path, new_cargo_toml_content)?;
+    }
 
     Ok(())
 }
@@ -71,14 +74,15 @@ pub fn get_agent(url: &str, token: &String) -> String {
 
 /// build entry for setting required agents
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let build_enabled = env::var("BUILD_ENABLED").map(|v| v == "1").unwrap_or(false);
+    let build_enabled = dotenv::var("BUILD_ENABLED")
+        .map(|v| v == "1" || v == "true")
+        .unwrap_or(false);
 
     if build_enabled {
         let base_api =
-            env::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
-
+            dotenv::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
         // fetch the latest ua and parse to files.
-        let token: String = match env::var("APILAYER_KEY") {
+        let token: String = match dotenv::var("APILAYER_KEY") {
             Ok(key) => key,
             Err(_) => {
                 println!("You need a valid {} API key to gather agents!", base_api);
@@ -154,6 +158,7 @@ pub fn agents() -> [&'static str; 9] {{
         let chrome_agent_list: Vec<ApiResult> =
             match get(&format!("{base_api}?chrome=true&list=true"))
                 .set("apikey", &token)
+                .set("user-agent", "spider-rs")
                 .call()
             {
                 Ok(req) => {
@@ -181,9 +186,9 @@ pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
         chrome_devices.push_str("];");
 
         fs::write(dest_path, chrome_devices).unwrap();
-
+        bump_version_in_cargo_toml()?;
         println!("cargo:rerun-if-changed=build.rs");
     }
-    bump_version_in_cargo_toml()?;
+
     Ok(())
 }
