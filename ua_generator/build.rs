@@ -37,7 +37,7 @@ fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cargo_toml_content.is_empty() {
         let mut parsed_toml: Value = cargo_toml_content.parse()?;
-
+        
         if let Some(version) = parsed_toml
             .get_mut("package")
             .and_then(|pkg| pkg.get_mut("version"))
@@ -185,8 +185,10 @@ pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
 
         chrome_devices.push_str("];");
 
-        fs::write(dest_path, chrome_devices).unwrap();
-        bump_version_in_cargo_toml()?;
+        if let Ok(_) = fs::write(dest_path, chrome_devices) {
+            let _ = bump_version_in_cargo_toml();
+        }
+        
         println!("cargo:rerun-if-changed=build.rs");
     }
 
