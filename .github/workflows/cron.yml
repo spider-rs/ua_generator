@@ -23,7 +23,7 @@ jobs:
             target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build and bump
-        run: cd ua_generator && BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build
+        run: cd ua_generator && BUILD_ENABLED=1 APILAYER_KEY="${{ secrets.APILAYER_KEY }}" cargo build
       - uses: EndBug/add-and-commit@v9
         with:
           message: "chore(agents): update agent list to latest"
