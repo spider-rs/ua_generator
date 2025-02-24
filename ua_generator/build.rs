@@ -4,7 +4,7 @@ extern crate ureq;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use ureq::{get, Error};
+use ureq::get;
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct ApiResult {
