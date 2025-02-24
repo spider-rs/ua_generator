@@ -4,7 +4,7 @@ extern crate ureq;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
-use ureq::get;
+use ureq::{get, Error};
 
 #[derive(Deserialize, Serialize, Debug, Default)]
 pub struct ApiResult {
@@ -37,7 +37,7 @@ fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
 
     if !cargo_toml_content.is_empty() {
         let mut parsed_toml: Value = cargo_toml_content.parse()?;
-        
+
         if let Some(version) = parsed_toml
             .get_mut("package")
             .and_then(|pkg| pkg.get_mut("version"))
@@ -66,8 +66,8 @@ pub fn get_agent(url: &str, token: &String) -> String {
 
             req.agent
         }
-        Err(e) => {
-            panic!("{:?}", e)
+        Err(_) => {
+            panic!("Failed to to get the user agent. Please check your API key.")
         }
     }
 }
@@ -90,6 +90,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         .to_string();
+
+        if token.is_empty() {
+            panic!("empty APILAYER_KEY token for the API.");
+        }
 
         // windows
         let windows_ie_desktop_agent = format!("{base_api}?windows=true&tablet=false&mobile=false&mac=false&linux=false&ie=true&firefox=false&desktop=true&chrome=false&android=false");
@@ -188,7 +192,7 @@ pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
         if let Ok(_) = fs::write(dest_path, chrome_devices) {
             let _ = bump_version_in_cargo_toml();
         }
-        
+
         println!("cargo:rerun-if-changed=build.rs");
     }
 
