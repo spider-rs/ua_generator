@@ -1,6 +1,7 @@
 extern crate serde;
 extern crate ureq;
 
+use dotenv::{dotenv, var};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
@@ -58,7 +59,11 @@ fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
 
 /// get the agent type for version os
 pub fn get_agent(url: &str, token: &String) -> String {
-    match get(&url).set("apikey", token).call() {
+    match get(&url)
+        .set("apikey", token)
+        .set("user-agent", "spider-rs")
+        .call()
+    {
         Ok(req) => {
             let req: ApiResult = req
                 .into_json()
@@ -66,23 +71,24 @@ pub fn get_agent(url: &str, token: &String) -> String {
 
             req.agent
         }
-        Err(_) => {
-            panic!("Failed to to get the user agent. Please check your API key.")
+        Err(e) => {
+            panic!("{:?}. Please check your API key", e)
         }
     }
 }
 
 /// build entry for setting required agents
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let build_enabled = dotenv::var("BUILD_ENABLED")
+    dotenv().ok();
+
+    let build_enabled = var("BUILD_ENABLED")
         .map(|v| v == "1" || v == "true")
         .unwrap_or(false);
 
     if build_enabled {
-        let base_api =
-            dotenv::var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
+        let base_api = var("API_URL").unwrap_or("https://api.spider.cloud/data/user_agents".into());
         // fetch the latest ua and parse to files.
-        let token: String = match dotenv::var("APILAYER_KEY") {
+        let token: String = match var("APILAYER_KEY") {
             Ok(key) => key,
             Err(_) => {
                 println!("You need a valid {} API key to gather agents!", base_api);
@@ -102,6 +108,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // mac
         let mac_firefox_desktop_agent = format!("{base_api}?windows=false&tablet=false&mobile=false&mac=true&linux=false&ie=false&firefox=true&desktop=true&chrome=false&android=false");
         let mac_chrome_desktop_agent = format!("{base_api}?windows=false&tablet=false&mobile=false&mac=true&linux=false&ie=false&firefox=false&desktop=true&chrome=true&android=false");
+
         // linux
         let linux_firefox_desktop_agent = format!("{base_api}?windows=false&tablet=false&mobile=false&mac=false&linux=true&ie=false&firefox=true&desktop=true&chrome=false&android=false");
         let linux_chrome_desktop_agent = format!("{base_api}?windows=false&tablet=false&mobile=false&mac=false&linux=true&ie=false&firefox=false&desktop=true&chrome=true&android=false");
@@ -116,7 +123,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let windows_chrome_desktop_agent: String = get_agent(&windows_chrome_desktop_agent, &token);
         // mac agents
         let mac_firefox_desktop_agent: String = get_agent(&mac_firefox_desktop_agent, &token);
-        let mac_chrome_desktop_agent: String = get_agent(&mac_chrome_desktop_agent, &token);
+
+        // mac chrome
+        let mac_chrome_desktop_agent1: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent2: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent3: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent4: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent5: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent6: String = get_agent(&mac_chrome_desktop_agent, &token);
+        let mac_chrome_desktop_agent7: String = get_agent(&mac_chrome_desktop_agent, &token);
+
         // linux
         let linux_firefox_desktop_agent: String = get_agent(&linux_firefox_desktop_agent, &token);
         let linux_chrome_desktop_agent: String = get_agent(&linux_chrome_desktop_agent, &token);
@@ -150,10 +166,44 @@ pub fn agents() -> [&'static str; 9] {{
             windows_chrome_desktop_agent,
             android_firefox_agent,
             mac_firefox_desktop_agent,
-            mac_chrome_desktop_agent,
+            mac_chrome_desktop_agent1,
             android_chrome_agent,
             linux_firefox_desktop_agent,
             linux_chrome_desktop_agent,
+        );
+
+        fs::write(&dest_path, agents).unwrap();
+
+        let dest_path = Path::new(&"./src").join("chrome_mac_ua_list.rs");
+
+        let agents = format!(
+            r#"/// static list of agents pre-built
+pub const STATIC_CHROME_MAC_AGENTS: &'static [&'static str; 9] = &[
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}"
+];  
+
+/// chrome mac user agent list
+pub fn chrome_mac_agents() -> [&'static str; 9] {{
+    STATIC_CHROME_MAC_AGENTS.to_owned()
+}}
+"#,
+            mac_chrome_desktop_agent1,
+            mac_chrome_desktop_agent2,
+            mac_chrome_desktop_agent3,
+            mac_chrome_desktop_agent4,
+            mac_chrome_desktop_agent5,
+            mac_chrome_desktop_agent6,
+            mac_chrome_desktop_agent7,
+            mac_chrome_desktop_agent1,
+            mac_chrome_desktop_agent4
         );
 
         fs::write(&dest_path, agents).unwrap();

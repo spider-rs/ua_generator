@@ -16,6 +16,8 @@
 //! Next, simply add the ua_generator::ua::spoof_ua()
 //! to get your random agent.
 
+/// Auto generated list of real Chrome Mac User Agents.
+pub mod chrome_mac_ua_list;
 /// Auto generated list of real Chrome User Agents.
 pub mod chrome_ua_list;
 /// User agent management.
