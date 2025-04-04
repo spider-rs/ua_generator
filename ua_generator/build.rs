@@ -135,7 +135,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         // linux
         let linux_firefox_desktop_agent: String = get_agent(&linux_firefox_desktop_agent, &token);
-        let linux_chrome_desktop_agent: String = get_agent(&linux_chrome_desktop_agent, &token);
+
+        let linux_chrome_desktop_agent1: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent2: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent3: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent4: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent5: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent6: String = get_agent(&linux_chrome_desktop_agent, &token);
+        let linux_chrome_desktop_agent7: String = get_agent(&linux_chrome_desktop_agent, &token);
+
         // android agents
         let android_firefox_agent: String = get_agent(&android_firefox_agent, &token);
         let android_chrome_agent: String = get_agent(&android_chrome_agent, &token);
@@ -169,7 +177,7 @@ pub fn agents() -> [&'static str; 9] {{
             mac_chrome_desktop_agent1,
             android_chrome_agent,
             linux_firefox_desktop_agent,
-            linux_chrome_desktop_agent,
+            linux_chrome_desktop_agent1,
         );
 
         fs::write(&dest_path, agents).unwrap();
@@ -204,6 +212,40 @@ pub fn chrome_mac_agents() -> [&'static str; 9] {{
             mac_chrome_desktop_agent7,
             mac_chrome_desktop_agent1,
             mac_chrome_desktop_agent4
+        );
+
+        fs::write(&dest_path, agents).unwrap();
+
+        let dest_path = Path::new(&"./src").join("chrome_linux_ua_list.rs");
+
+        let agents = format!(
+            r#"/// static list of agents pre-built
+pub const STATIC_CHROME_LINUX_AGENTS: &'static [&'static str; 9] = &[
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}"
+];  
+
+/// chrome linux user agent list
+pub fn chrome_linux_agents() -> [&'static str; 9] {{
+    STATIC_CHROME_LINUX_AGENTS.to_owned()
+}}
+"#,
+            linux_chrome_desktop_agent1,
+            linux_chrome_desktop_agent2,
+            linux_chrome_desktop_agent3,
+            linux_chrome_desktop_agent4,
+            linux_chrome_desktop_agent5,
+            linux_chrome_desktop_agent6,
+            linux_chrome_desktop_agent7,
+            linux_chrome_desktop_agent1,
+            linux_chrome_desktop_agent4
         );
 
         fs::write(&dest_path, agents).unwrap();

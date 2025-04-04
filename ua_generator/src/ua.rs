@@ -1,3 +1,4 @@
+pub use crate::chrome_linux_ua_list::STATIC_CHROME_LINUX_AGENTS;
 pub use crate::chrome_mac_ua_list::STATIC_CHROME_MAC_AGENTS;
 pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
 
@@ -20,6 +21,11 @@ pub fn spoof_chrome_ua() -> &'static str {
 /// Get a random chrome mac UA from a static precompiled list.
 pub fn spoof_chrome_mac_ua() -> &'static str {
     STATIC_CHROME_MAC_AGENTS[fastrand::usize(..STATIC_CHROME_MAC_AGENTS.len())]
+}
+
+/// Get a random chrome linux UA from a static precompiled list.
+pub fn spoof_chrome_linux_ua() -> &'static str {
+    STATIC_CHROME_LINUX_AGENTS[fastrand::usize(..STATIC_CHROME_LINUX_AGENTS.len())]
 }
 
 /// Structure to manage a dynamic list of User-Agents, with quick lookup capabilities.

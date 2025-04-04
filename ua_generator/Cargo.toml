@@ -1,10 +1,10 @@
 [package]
 name = "ua_generator"
-version = "0.5.10"
+version = "0.5.11"
 edition = "2021"
-authors = ["j-mendez <jeff@a11ywatch.com>"]
+authors = ["j-mendez <jeff@spider.cloud>"]
 description = "Random User Agent Spoofer in Rust."
-repository = "https://github.com/a11ywatch/ua_generator"
+repository = "https://github.com/spider-rs/ua_generator"
 readme = "../README.md"
 keywords = ["user_agent", "useragent", "user_agent_spoofer"]
 categories = ["web-programming"]

@@ -867,7 +867,7 @@ dependencies = [
 
 [[package]]
 name = "ua_generator"
-version = "0.5.9"
+version = "0.5.11"
 dependencies = [
  "dotenv",
  "fastrand",
