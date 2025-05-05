@@ -1,10 +1,9 @@
 pub use crate::chrome_linux_ua_list::STATIC_CHROME_LINUX_AGENTS;
 pub use crate::chrome_mac_ua_list::STATIC_CHROME_MAC_AGENTS;
 pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
-
 pub use crate::ua_list::STATIC_AGENTS;
 
-use fastrand;
+use fastrand::{self, Rng};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -26,6 +25,26 @@ pub fn spoof_chrome_mac_ua() -> &'static str {
 /// Get a random chrome linux UA from a static precompiled list.
 pub fn spoof_chrome_linux_ua() -> &'static str {
     STATIC_CHROME_LINUX_AGENTS[fastrand::usize(..STATIC_CHROME_LINUX_AGENTS.len())]
+}
+
+/// Get a random UA from a static precompiled list.
+pub fn spoof_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
+    STATIC_AGENTS[thread_rng.usize(..STATIC_AGENTS.len())]
+}
+
+/// Get a random chrome UA from a static precompiled list.
+pub fn spoof_chrome_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
+    STATIC_CHROME_AGENTS[thread_rng.usize(..STATIC_CHROME_AGENTS.len())]
+}
+
+/// Get a random chrome mac UA from a static precompiled list.
+pub fn spoof_chrome_mac_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
+    STATIC_CHROME_MAC_AGENTS[thread_rng.usize(..STATIC_CHROME_MAC_AGENTS.len())]
+}
+
+/// Get a random chrome linux UA from a static precompiled list.
+pub fn spoof_chrome_linux_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
+    STATIC_CHROME_LINUX_AGENTS[thread_rng.usize(..STATIC_CHROME_LINUX_AGENTS.len())]
 }
 
 /// Structure to manage a dynamic list of User-Agents, with quick lookup capabilities.
@@ -104,6 +123,15 @@ impl UserAgents {
             spoof_ua()
         } else {
             &self.list[fastrand::usize(..self.list.len())]
+        }
+    }
+
+    /// Returns a random user agent from the dynamic list.
+    pub fn spoof_with_randomizer(&self, thread_rng: &mut Rng) -> &str {
+        if self.list.is_empty() {
+            spoof_ua()
+        } else {
+            &self.list[thread_rng.usize(..self.list.len())]
         }
     }
 }
