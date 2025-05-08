@@ -1,7 +1,7 @@
 extern crate serde;
 extern crate ureq;
 
-use dotenv::{dotenv, var};
+use dotenvy::{dotenv, var};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
