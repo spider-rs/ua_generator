@@ -20,4 +20,4 @@ ureq = { version = "2.10", features = ["json", "charset", "brotli"] }
 serde = { version = "1", features = ["derive"] }
 serde_json =  { version = "1" }
 toml =  { version = "0" }
-dotenv = "0.15.0"
+dotenvy = "0.15.0"
