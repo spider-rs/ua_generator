@@ -285,6 +285,113 @@ pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
             let _ = bump_version_in_cargo_toml();
         }
 
+        // Build a list of valid chrome user-agents to use for chrome only browsers.
+        let chrome_agent_list: Vec<ApiResult> = match get(&format!(
+            "{base_api}?chrome=true&desktop=false&tablet=false&mobile=true&list=true"
+        ))
+        .set("apikey", &token)
+        .set("user-agent", "spider-rs")
+        .call()
+        {
+            Ok(req) => {
+                let req: Vec<ApiResult> = req
+                    .into_json()
+                    .expect("Authorization not granted! Make sure to set a valid API key.");
+                req
+            }
+            Err(e) => {
+                panic!("{:?}", e)
+            }
+        };
+        let dest_path = Path::new(&"./src").join("chrome_mobile_ua_list.rs");
+        let mut chrome_devices = format!(
+            r#"/// List of real chrome mobile User-Agents.
+pub const STATIC_CHROME_MOBILE_AGENTS: &'static [&'static str; {}] = &[
+"#,
+            chrome_agent_list.len()
+        );
+
+        for device in chrome_agent_list {
+            chrome_devices.push_str(&format!("    \"{}\",\n", device.agent));
+        }
+
+        chrome_devices.push_str("];");
+
+        if let Ok(_) = fs::write(dest_path, chrome_devices) {
+            let _ = bump_version_in_cargo_toml();
+        }
+
+        // Build a list of valid chrome user-agents to use for chrome only browsers.
+        let chrome_agent_list: Vec<ApiResult> =
+            match get(&format!("{base_api}?chrome=true&list=true"))
+                .set("apikey", &token)
+                .set("user-agent", "spider-rs")
+                .call()
+            {
+                Ok(req) => {
+                    let req: Vec<ApiResult> = req
+                        .into_json()
+                        .expect("Authorization not granted! Make sure to set a valid API key.");
+                    req
+                }
+                Err(e) => {
+                    panic!("{:?}", e)
+                }
+            };
+        let dest_path = Path::new(&"./src").join("chrome_ua_list.rs");
+        let mut chrome_devices = format!(
+            r#"/// List of real Chrome User-Agents.
+pub const STATIC_CHROME_AGENTS: &'static [&'static str; {}] = &[
+"#,
+            chrome_agent_list.len()
+        );
+
+        for device in chrome_agent_list {
+            chrome_devices.push_str(&format!("    \"{}\",\n", device.agent));
+        }
+
+        chrome_devices.push_str("];");
+
+        if let Ok(_) = fs::write(dest_path, chrome_devices) {
+            let _ = bump_version_in_cargo_toml();
+        }
+
+        // Build a list of valid chrome user-agents to use for chrome only browsers.
+        let chrome_agent_list: Vec<ApiResult> = match get(&format!(
+            "{base_api}?chrome=true&desktop=false&tablet=true&mobile=false&list=true"
+        ))
+        .set("apikey", &token)
+        .set("user-agent", "spider-rs")
+        .call()
+        {
+            Ok(req) => {
+                let req: Vec<ApiResult> = req
+                    .into_json()
+                    .expect("Authorization not granted! Make sure to set a valid API key.");
+                req
+            }
+            Err(e) => {
+                panic!("{:?}", e)
+            }
+        };
+        let dest_path = Path::new(&"./src").join("chrome_tablet_ua_list.rs");
+        let mut chrome_devices = format!(
+            r#"/// List of real chrome tablet User-Agents.
+pub const STATIC_CHROME_TABLET_AGENTS: &'static [&'static str; {}] = &[
+"#,
+            chrome_agent_list.len()
+        );
+
+        for device in chrome_agent_list {
+            chrome_devices.push_str(&format!("    \"{}\",\n", device.agent));
+        }
+
+        chrome_devices.push_str("];");
+
+        if let Ok(_) = fs::write(dest_path, chrome_devices) {
+            let _ = bump_version_in_cargo_toml();
+        }
+
         println!("cargo:rerun-if-changed=build.rs");
     }
 

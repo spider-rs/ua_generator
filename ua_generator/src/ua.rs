@@ -1,5 +1,7 @@
 pub use crate::chrome_linux_ua_list::STATIC_CHROME_LINUX_AGENTS;
 pub use crate::chrome_mac_ua_list::STATIC_CHROME_MAC_AGENTS;
+pub use crate::chrome_mobile_ua_list::STATIC_CHROME_MOBILE_AGENTS;
+pub use crate::chrome_tablet_ua_list::STATIC_CHROME_TABLET_AGENTS;
 pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
 pub use crate::ua_list::STATIC_AGENTS;
 
@@ -27,6 +29,16 @@ pub fn spoof_chrome_linux_ua() -> &'static str {
     STATIC_CHROME_LINUX_AGENTS[fastrand::usize(..STATIC_CHROME_LINUX_AGENTS.len())]
 }
 
+/// Get a random chrome mobile UA from a static precompiled list.
+pub fn spoof_chrome_mobile_ua() -> &'static str {
+    STATIC_CHROME_MOBILE_AGENTS[fastrand::usize(..STATIC_CHROME_MOBILE_AGENTS.len())]
+}
+
+/// Get a random chrome mobile UA from a static precompiled list.
+pub fn spoof_chrome_tablet_ua() -> &'static str {
+    STATIC_CHROME_TABLET_AGENTS[fastrand::usize(..STATIC_CHROME_TABLET_AGENTS.len())]
+}
+
 /// Get a random UA from a static precompiled list.
 pub fn spoof_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
     STATIC_AGENTS[thread_rng.usize(..STATIC_AGENTS.len())]
@@ -45,6 +57,30 @@ pub fn spoof_chrome_mac_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str
 /// Get a random chrome linux UA from a static precompiled list.
 pub fn spoof_chrome_linux_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
     STATIC_CHROME_LINUX_AGENTS[thread_rng.usize(..STATIC_CHROME_LINUX_AGENTS.len())]
+}
+
+/// Returns a combined vector containing all user-agents from various predefined static categories.
+pub fn all_static_agents() -> &'static Vec<&'static str> {
+    static AGENTS: std::sync::OnceLock<Vec<&'static str>> = std::sync::OnceLock::new();
+
+    AGENTS.get_or_init(|| {
+        STATIC_AGENTS
+            .iter()
+            .chain(STATIC_CHROME_AGENTS.iter())
+            .chain(STATIC_CHROME_MAC_AGENTS.iter())
+            .chain(STATIC_CHROME_LINUX_AGENTS.iter())
+            .chain(STATIC_CHROME_MOBILE_AGENTS.iter())
+            .chain(STATIC_CHROME_TABLET_AGENTS.iter())
+            .copied()
+            .collect()
+    })
+}
+
+/// Returns a random user-agent from all predefined static categories.
+/// Generally you do not want to use this unless you have a setup that can at hand use any of the agents.
+pub fn spoof_random_agent(thread_rng: &mut Rng) -> &'static str {
+    let agents = all_static_agents();
+    agents[thread_rng.usize(..agents.len())]
 }
 
 /// Structure to manage a dynamic list of User-Agents, with quick lookup capabilities.
