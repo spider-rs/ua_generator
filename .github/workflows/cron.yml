@@ -28,14 +28,12 @@ jobs:
       - name: Install cargo-release
         run: cargo install cargo-release
 
-      - name: Build and release
+      - name: Build
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
           APILAYER_KEY: ${{ secrets.APILAYER_KEY }}
         run: |
           cd ua_generator
           BUILD_ENABLED=1 cargo build
-          cargo release minor --no-confirm
 
       - uses: EndBug/add-and-commit@v9
         with:
@@ -45,6 +43,14 @@ jobs:
           author_email: support@spider.cloud
           add: "ua_generator/Cargo.toml ua_generator/Cargo.lock"
           pull: "--rebase --autostash"
+
+      - name: Release
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          APILAYER_KEY: ${{ secrets.APILAYER_KEY }}
+        run: |
+          cd ua_generator
+          cargo release minor --no-confirm
 
       - name: Push tags
         run: git push --follow-tags
