@@ -41,7 +41,7 @@ jobs:
           committer_name: UA Generator
           author_name: UA Generator
           author_email: support@spider.cloud
-          add: "ua_generator/Cargo.toml ua_generator/Cargo.lock"
+          add: "."
           pull: "--rebase --autostash"
 
       - name: Release
