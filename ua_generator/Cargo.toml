@@ -1,6 +1,6 @@
 [package]
 name = "ua_generator"
-version = "0.5.18"
+version = "0.5.20"
 edition = "2021"
 authors = ["j-mendez <jeff@spider.cloud>"]
 description = "Random User Agent Spoofer in Rust."
@@ -10,14 +10,20 @@ keywords = ["user_agent", "useragent", "user_agent_spoofer"]
 categories = ["web-programming"]
 license = "MIT"
 documentation = "https://docs.rs/ua_generator"
-build = "./build.rs"
+
+build = "build.rs"
 
 [dependencies]
 fastrand = "2"
 
+[features]
+default = ["fetch"]
+fetch = ["ureq", "serde", "serde_json", "toml", "dotenvy"]
+
 [build-dependencies]
-ureq = { version = "2.10", features = ["json", "charset", "brotli"] }
-serde = { version = "1", features = ["derive"] }
-serde_json =  { version = "1" }
-toml =  { version = "0" }
-dotenvy = "0.15.0"
+ureq = { version = "2.10", optional = true, features = ["json", "charset", "brotli"] }
+serde = { version = "1", optional = true, features = ["derive"] }
+serde_json = { version = "1", optional = true }
+toml = { version = "0", optional = true }
+dotenvy = { version = "0.15.0", optional = true }
+

@@ -1,18 +1,17 @@
-extern crate serde;
-extern crate ureq;
 
-use dotenvy::{dotenv, var};
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "fetch")]
 use std::fs;
+#[cfg(feature = "fetch")]
 use std::path::Path;
-use ureq::get;
 
-#[derive(Deserialize, Serialize, Debug, Default)]
+#[cfg(feature = "fetch")]
+#[derive(serde::Deserialize, serde::Serialize, Debug, Default)]
 pub struct ApiResult {
     /// user agent string id
     agent: String,
 }
 
+#[cfg(feature = "fetch")]
 /// bump the minor
 fn increment_version(version: &str) -> String {
     let mut parts: Vec<String> = version.split('.').map(String::from).collect(); // Collect into Vec<String> to handle owned strings
@@ -24,6 +23,7 @@ fn increment_version(version: &str) -> String {
     parts.join(".")
 }
 
+#[cfg(feature = "fetch")]
 fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
     use serde_json::Value;
     use std::io::Read;
@@ -58,7 +58,10 @@ fn bump_version_in_cargo_toml() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 /// get the agent type for version os
+#[cfg(feature = "fetch")]
 pub fn get_agent(url: &str, token: &String) -> String {
+    use ureq::get;
+
     match get(&url)
         .set("apikey", token)
         .set("user-agent", "spider-rs")
@@ -77,8 +80,17 @@ pub fn get_agent(url: &str, token: &String) -> String {
     }
 }
 
-/// build entry for setting required agents
+#[cfg(not(feature = "fetch"))]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    Ok(())
+}
+
+/// build entry for setting required agents
+#[cfg(feature = "fetch")]
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    use dotenvy::{dotenv, var};
+    use ureq::get;
+
     dotenv().ok();
 
     let build_enabled = var("BUILD_ENABLED")
