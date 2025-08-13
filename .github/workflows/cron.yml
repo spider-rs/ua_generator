@@ -26,7 +26,10 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Install cargo-release
-        run: cargo install cargo-release
+        run: |
+          if ! command -v cargo-release &> /dev/null; then
+            cargo install cargo-release
+          fi
 
       - name: Build
         env:
