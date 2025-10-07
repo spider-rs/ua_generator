@@ -136,6 +136,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // mac agents
         let mac_firefox_desktop_agent: String = get_agent(&mac_firefox_desktop_agent, &token);
 
+        // windows chrome
+        let windows_chrome_desktop_agent1: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent2: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent3: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent4: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent5: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent6: String = get_agent(&windows_chrome_desktop_agent, &token);
+        let windows_chrome_desktop_agent7: String = get_agent(&windows_chrome_desktop_agent, &token);
+
         // mac chrome
         let mac_chrome_desktop_agent1: String = get_agent(&mac_chrome_desktop_agent, &token);
         let mac_chrome_desktop_agent2: String = get_agent(&mac_chrome_desktop_agent, &token);
@@ -164,7 +173,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let agents = format!(
             r#"/// static list of agents pre-built
-pub const STATIC_AGENTS: &'static [&'static str; 9] = &[
+pub const STATIC_AGENTS: &'static [&'static str; 11] = &[
+    "{}",
+    "{}",
     "{}",
     "{}",
     "{}",
@@ -187,9 +198,45 @@ pub fn agents() -> [&'static str; 9] {{
             android_firefox_agent,
             mac_firefox_desktop_agent,
             mac_chrome_desktop_agent1,
+            windows_chrome_desktop_agent2,
             android_chrome_agent,
             linux_firefox_desktop_agent,
             linux_chrome_desktop_agent1,
+            windows_chrome_desktop_agent1,
+        );
+
+        fs::write(&dest_path, agents).unwrap();
+
+        let dest_path = Path::new(&"./src").join("chrome_windows_ua_list.rs");
+
+        let agents = format!(
+            r#"/// static list of agents pre-built windows
+pub const STATIC_CHROME_WINDOWS_AGENTS: &'static [&'static str; 9] = &[
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}",
+    "{}"
+];  
+
+/// chrome windows user agent list
+pub fn chrome_windows_agents() -> [&'static str; 9] {{
+    STATIC_CHROME_WINDOWS_AGENTS.to_owned()
+}}
+"#,
+            windows_chrome_desktop_agent1,
+            windows_chrome_desktop_agent2,
+            windows_chrome_desktop_agent3,
+            windows_chrome_desktop_agent4,
+            windows_chrome_desktop_agent5,
+            windows_chrome_desktop_agent6,
+            windows_chrome_desktop_agent7,
+            windows_chrome_desktop_agent3,
+            windows_chrome_desktop_agent2
         );
 
         fs::write(&dest_path, agents).unwrap();
@@ -197,7 +244,7 @@ pub fn agents() -> [&'static str; 9] {{
         let dest_path = Path::new(&"./src").join("chrome_mac_ua_list.rs");
 
         let agents = format!(
-            r#"/// static list of agents pre-built
+            r#"/// static list of agents pre-built mac
 pub const STATIC_CHROME_MAC_AGENTS: &'static [&'static str; 9] = &[
     "{}",
     "{}",
@@ -231,7 +278,7 @@ pub fn chrome_mac_agents() -> [&'static str; 9] {{
         let dest_path = Path::new(&"./src").join("chrome_linux_ua_list.rs");
 
         let agents = format!(
-            r#"/// static list of agents pre-built
+            r#"/// static list of agents pre-built linux
 pub const STATIC_CHROME_LINUX_AGENTS: &'static [&'static str; 9] = &[
     "{}",
     "{}",

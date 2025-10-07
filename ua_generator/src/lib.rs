@@ -20,6 +20,8 @@
 pub mod chrome_linux_ua_list;
 /// Auto generated list of real Chrome Mac User Agents.
 pub mod chrome_mac_ua_list;
+/// Auto generated list of real Chrome Windows User Agents.
+pub mod chrome_windows_ua_list;
 /// Auto generated latest real chrome mobile user-agents.
 pub mod chrome_mobile_ua_list;
 /// Auto generated latest real chrome tablet user-agents.
