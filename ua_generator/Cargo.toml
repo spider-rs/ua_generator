@@ -1,6 +1,6 @@
 [package]
 name = "ua_generator"
-version = "0.5.32"
+version = "0.5.33"
 edition = "2021"
 authors = ["j-mendez <jeff@spider.cloud>"]
 description = "Random User Agent Spoofer in Rust."
@@ -18,7 +18,13 @@ fastrand = "2"
 
 [features]
 default = ["fetch"]
-fetch = ["ureq", "serde", "serde_json", "toml", "dotenvy"]
+fetch = [
+  "dep:ureq",
+  "dep:serde",
+  "dep:serde_json",
+  "dep:toml",
+  "dep:dotenvy",
+]
 
 [build-dependencies]
 ureq = { version = "2.10", optional = true, features = ["json", "charset", "brotli"] }

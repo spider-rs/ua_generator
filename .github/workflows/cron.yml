@@ -31,12 +31,13 @@ jobs:
             cargo install cargo-release
           fi
 
-      - name: Build
+      - name: Build & run
+        working-directory: ua_generator
         env:
+          BUILD_ENABLED: "1"
           APILAYER_KEY: ${{ secrets.APILAYER_KEY }}
         run: |
-          cd ua_generator
-          BUILD_ENABLED=1 APILAYER_KEY=${{ secrets.APILAYER_KEY }} cargo build
+          cargo build --release --features fetch
 
       - name: Bump patch for ua_generator
         id: bump
