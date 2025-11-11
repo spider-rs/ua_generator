@@ -3,85 +3,418 @@ pub use crate::chrome_mac_ua_list::STATIC_CHROME_MAC_AGENTS;
 pub use crate::chrome_mobile_ua_list::STATIC_CHROME_MOBILE_AGENTS;
 pub use crate::chrome_tablet_ua_list::STATIC_CHROME_TABLET_AGENTS;
 pub use crate::chrome_ua_list::STATIC_CHROME_AGENTS;
+pub use crate::chrome_windows_ua_list::STATIC_CHROME_WINDOWS_AGENTS;
+pub use crate::firefox_linux_ua_list::STATIC_FIREFOX_LINUX_AGENTS;
+pub use crate::firefox_mac_ua_list::STATIC_FIREFOX_MAC_AGENTS;
+pub use crate::firefox_mobile_ua_list::STATIC_FIREFOX_MOBILE_AGENTS;
+pub use crate::firefox_tablet_ua_list::STATIC_FIREFOX_TABLET_AGENTS;
+pub use crate::firefox_ua_list::STATIC_FIREFOX_AGENTS;
+pub use crate::firefox_windows_ua_list::STATIC_FIREFOX_WINDOWS_AGENTS;
+pub use crate::safari_mac_ua_list::STATIC_SAFARI_MAC_AGENTS;
+pub use crate::safari_mobile_ua_list::STATIC_SAFARI_MOBILE_AGENTS;
+pub use crate::safari_tablet_ua_list::STATIC_SAFARI_TABLET_AGENTS;
+pub use crate::safari_ua_list::STATIC_SAFARI_AGENTS;
 pub use crate::ua_list::STATIC_AGENTS;
 
 use fastrand::{self, Rng};
 use std::collections::HashMap;
 use std::rc::Rc;
 
+/// Operating systems (mirrors build.rs)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Os {
+    /// Windows
+    Windows,
+    /// Mac
+    Mac,
+    /// Linux
+    Linux,
+    /// Android
+    Android,
+}
+
+/// Device / form factor (mirrors build.rs)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FormFactor {
+    /// Desktop
+    Desktop,
+    /// Mobile
+    Mobile,
+    /// Tablet
+    Tablet,
+}
+
+/// Browser families (mirrors build.rs)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Browser {
+    /// Chrome
+    Chrome,
+    /// Firefox
+    Firefox,
+    /// IE
+    Ie,
+    /// Safari
+    Safari,
+}
+
 /// Get a random UA from a static precompiled list.
 pub fn spoof_ua() -> &'static str {
-    STATIC_AGENTS[fastrand::usize(..STATIC_AGENTS.len())]
+    pick_rand(None, STATIC_AGENTS)
 }
 
 /// Get a random chrome UA from a static precompiled list.
 pub fn spoof_chrome_ua() -> &'static str {
-    STATIC_CHROME_AGENTS[fastrand::usize(..STATIC_CHROME_AGENTS.len())]
+    pick_rand(None, STATIC_CHROME_AGENTS)
 }
 
 /// Get a random chrome mac UA from a static precompiled list.
 pub fn spoof_chrome_mac_ua() -> &'static str {
-    STATIC_CHROME_MAC_AGENTS[fastrand::usize(..STATIC_CHROME_MAC_AGENTS.len())]
+    pick_rand(None, STATIC_CHROME_MAC_AGENTS)
 }
 
 /// Get a random chrome linux UA from a static precompiled list.
 pub fn spoof_chrome_linux_ua() -> &'static str {
-    STATIC_CHROME_LINUX_AGENTS[fastrand::usize(..STATIC_CHROME_LINUX_AGENTS.len())]
+    pick_rand(None, STATIC_CHROME_LINUX_AGENTS)
 }
 
 /// Get a random chrome mobile UA from a static precompiled list.
 pub fn spoof_chrome_mobile_ua() -> &'static str {
-    STATIC_CHROME_MOBILE_AGENTS[fastrand::usize(..STATIC_CHROME_MOBILE_AGENTS.len())]
+    pick_rand(None, STATIC_CHROME_MOBILE_AGENTS)
 }
 
-/// Get a random chrome mobile UA from a static precompiled list.
+/// Get a random chrome tablet UA from a static precompiled list.
 pub fn spoof_chrome_tablet_ua() -> &'static str {
-    STATIC_CHROME_TABLET_AGENTS[fastrand::usize(..STATIC_CHROME_TABLET_AGENTS.len())]
+    pick_rand(None, STATIC_CHROME_TABLET_AGENTS)
 }
 
 /// Get a random UA from a static precompiled list.
 pub fn spoof_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
-    STATIC_AGENTS[thread_rng.usize(..STATIC_AGENTS.len())]
+    pick_rand(Some(thread_rng), STATIC_AGENTS)
 }
 
 /// Get a random chrome UA from a static precompiled list.
 pub fn spoof_chrome_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
-    STATIC_CHROME_AGENTS[thread_rng.usize(..STATIC_CHROME_AGENTS.len())]
+    pick_rand(Some(thread_rng), STATIC_CHROME_AGENTS)
 }
 
 /// Get a random chrome mac UA from a static precompiled list.
 pub fn spoof_chrome_mac_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
-    STATIC_CHROME_MAC_AGENTS[thread_rng.usize(..STATIC_CHROME_MAC_AGENTS.len())]
+    pick_rand(Some(thread_rng), STATIC_CHROME_MAC_AGENTS)
 }
 
 /// Get a random chrome linux UA from a static precompiled list.
 pub fn spoof_chrome_linux_ua_with_randomizer(thread_rng: &mut Rng) -> &'static str {
-    STATIC_CHROME_LINUX_AGENTS[thread_rng.usize(..STATIC_CHROME_LINUX_AGENTS.len())]
+    pick_rand(Some(thread_rng), STATIC_CHROME_LINUX_AGENTS)
 }
+
+/// Slices for each generated family (zero-copy, no alloc).
+#[inline]
+pub fn chrome_agents() -> &'static [&'static str] {
+    STATIC_CHROME_AGENTS
+}
+
+#[inline]
+/// Chrome windows agents.
+pub fn chrome_windows_agents() -> &'static [&'static str] {
+    STATIC_CHROME_WINDOWS_AGENTS
+}
+
+#[inline]
+/// Chrome mac agents.
+pub fn chrome_mac_agents() -> &'static [&'static str] {
+    STATIC_CHROME_MAC_AGENTS
+}
+
+#[inline]
+/// Chrome linux agents.
+pub fn chrome_linux_agents() -> &'static [&'static str] {
+    STATIC_CHROME_LINUX_AGENTS
+}
+
+#[inline]
+/// Chrome mobile agents.
+pub fn chrome_mobile_agents() -> &'static [&'static str] {
+    STATIC_CHROME_MOBILE_AGENTS
+}
+
+#[inline]
+/// Chrome tablet agents.
+pub fn chrome_tablet_agents() -> &'static [&'static str] {
+    STATIC_CHROME_TABLET_AGENTS
+}
+
+/// Get a random firefox UA from a static precompiled list.
+pub fn spoof_firefox_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_AGENTS)
+}
+
+/// Get a random firefox windows UA.
+pub fn spoof_firefox_windows_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_WINDOWS_AGENTS)
+}
+
+/// Get a random firefox mac UA.
+pub fn spoof_firefox_mac_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_MAC_AGENTS)
+}
+
+/// Get a random firefox linux UA.
+pub fn spoof_firefox_linux_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_LINUX_AGENTS)
+}
+
+/// Get a random firefox mobile UA.
+pub fn spoof_firefox_mobile_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_MOBILE_AGENTS)
+}
+
+/// Get a random firefox tablet UA.
+pub fn spoof_firefox_tablet_ua() -> &'static str {
+    pick_rand(None, STATIC_FIREFOX_TABLET_AGENTS)
+}
+
+/// Random Firefox UA using the provided RNG (deterministic with seeded RNG).
+pub fn spoof_firefox_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_AGENTS)
+}
+
+/// Random Firefox Windows (desktop) UA using the provided RNG.
+pub fn spoof_firefox_windows_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_WINDOWS_AGENTS)
+}
+
+/// Random Firefox macOS (desktop) UA using the provided RNG.
+pub fn spoof_firefox_mac_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_MAC_AGENTS)
+}
+
+/// Random Firefox Linux (desktop) UA using the provided RNG.
+pub fn spoof_firefox_linux_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_LINUX_AGENTS)
+}
+
+/// Random Firefox Mobile UA using the provided RNG.
+pub fn spoof_firefox_mobile_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_MOBILE_AGENTS)
+}
+
+/// Random Firefox Tablet UA using the provided RNG.
+pub fn spoof_firefox_tablet_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_FIREFOX_TABLET_AGENTS)
+}
+
+#[inline]
+/// All Firefox UAs (mixed OS/form factors).
+pub fn firefox_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_AGENTS
+}
+
+#[inline]
+/// Firefox Windows desktop UAs.
+pub fn firefox_windows_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_WINDOWS_AGENTS
+}
+
+#[inline]
+/// Firefox macOS desktop UAs.
+pub fn firefox_mac_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_MAC_AGENTS
+}
+
+#[inline]
+/// Firefox Linux desktop UAs.
+pub fn firefox_linux_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_LINUX_AGENTS
+}
+
+#[inline]
+/// Firefox Mobile UAs.
+pub fn firefox_mobile_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_MOBILE_AGENTS
+}
+
+#[inline]
+/// Firefox Tablet UAs.
+pub fn firefox_tablet_agents() -> &'static [&'static str] {
+    STATIC_FIREFOX_TABLET_AGENTS
+}
+
+/// Random Safari UA.
+pub fn spoof_safari_ua() -> &'static str {
+    pick_rand(None, STATIC_SAFARI_AGENTS)
+}
+/// Random Safari macOS (desktop) UA.
+pub fn spoof_safari_mac_ua() -> &'static str {
+    pick_rand(None, STATIC_SAFARI_MAC_AGENTS)
+}
+/// Random Safari Mobile (iOS) UA.
+pub fn spoof_safari_mobile_ua() -> &'static str {
+    pick_rand(None, STATIC_SAFARI_MOBILE_AGENTS)
+}
+/// Random Safari Tablet (iPadOS) UA.
+pub fn spoof_safari_tablet_ua() -> &'static str {
+    pick_rand(None, STATIC_SAFARI_TABLET_AGENTS)
+}
+
+/// Random Safari UA using the provided RNG.
+pub fn spoof_safari_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_SAFARI_AGENTS)
+}
+
+/// Random Safari Mac UA using the provided RNG.
+pub fn spoof_safari_mac_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_SAFARI_MAC_AGENTS)
+}
+
+/// Random Safari Mobile UA using the provided RNG.
+pub fn spoof_safari_mobile_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_SAFARI_MOBILE_AGENTS)
+}
+
+/// Random Safari Tablet UA using the provided RNG.
+pub fn spoof_safari_tablet_ua_with_randomizer(rng: &mut Rng) -> &'static str {
+    pick_rand(Some(rng), STATIC_SAFARI_TABLET_AGENTS)
+}
+
+#[inline]
+/// All Safari UAs (mixed OS/form factors).
+pub fn safari_agents() -> &'static [&'static str] {
+    STATIC_SAFARI_AGENTS
+}
+
+#[inline]
+/// All Safari Mac UAs (mixed OS/form factors).
+pub fn safari_mac_agents() -> &'static [&'static str] {
+    STATIC_SAFARI_MAC_AGENTS
+}
+
+#[inline]
+/// All Safari Mobile UAs (mixed OS/form factors).
+pub fn safari_mobile_agents() -> &'static [&'static str] {
+    STATIC_SAFARI_MOBILE_AGENTS
+}
+
+#[inline]
+/// All Safari Tablet UAs (mixed OS/form factors).
+pub fn safari_tablet_agents() -> &'static [&'static str] {
+    STATIC_SAFARI_TABLET_AGENTS
+}
+
+#[inline]
+/// Mixed static agents.
+pub fn mixed_static_agents() -> &'static [&'static str] {
+    STATIC_AGENTS
+}
+
+/// Generic chooser using the typed enums used in build.rs.
+/// If a precise list for (os, form, browser) isn’t generated at build time,
+/// we fall back in this order: OS+Chrome desktop list → all Chrome list → mixed static list.
+pub fn spoof_by(
+    os: Option<Os>,
+    form: Option<FormFactor>,
+    browser: Option<Browser>,
+    rng: Option<&mut Rng>,
+) -> &'static str {
+    match (os, form, browser) {
+        // --- Chrome  ---
+        (Some(Os::Windows), Some(FormFactor::Desktop), Some(Browser::Chrome)) => {
+            pick_rand(rng, STATIC_CHROME_WINDOWS_AGENTS)
+        }
+        (Some(Os::Mac), Some(FormFactor::Desktop), Some(Browser::Chrome)) => {
+            pick_rand(rng, STATIC_CHROME_MAC_AGENTS)
+        }
+        (Some(Os::Linux), Some(FormFactor::Desktop), Some(Browser::Chrome)) => {
+            pick_rand(rng, STATIC_CHROME_LINUX_AGENTS)
+        }
+        (_, Some(FormFactor::Mobile), Some(Browser::Chrome)) => {
+            pick_rand(rng, STATIC_CHROME_MOBILE_AGENTS)
+        }
+        (_, Some(FormFactor::Tablet), Some(Browser::Chrome)) => {
+            pick_rand(rng, STATIC_CHROME_TABLET_AGENTS)
+        }
+        (_, _, Some(Browser::Chrome)) => pick_rand(rng, STATIC_CHROME_AGENTS),
+
+        // --- Firefox ---
+        (Some(Os::Windows), Some(FormFactor::Desktop), Some(Browser::Firefox)) => {
+            pick_rand(rng, STATIC_FIREFOX_WINDOWS_AGENTS)
+        }
+        (Some(Os::Mac), Some(FormFactor::Desktop), Some(Browser::Firefox)) => {
+            pick_rand(rng, STATIC_FIREFOX_MAC_AGENTS)
+        }
+        (Some(Os::Linux), Some(FormFactor::Desktop), Some(Browser::Firefox)) => {
+            pick_rand(rng, STATIC_FIREFOX_LINUX_AGENTS)
+        }
+        (_, Some(FormFactor::Mobile), Some(Browser::Firefox)) => {
+            pick_rand(rng, STATIC_FIREFOX_MOBILE_AGENTS)
+        }
+        (_, Some(FormFactor::Tablet), Some(Browser::Firefox)) => {
+            pick_rand(rng, STATIC_FIREFOX_TABLET_AGENTS)
+        }
+        (_, _, Some(Browser::Firefox)) => pick_rand(rng, STATIC_FIREFOX_AGENTS),
+
+        // --- Safari ---
+        // Desktop macOS
+        (Some(Os::Mac), Some(FormFactor::Desktop), Some(Browser::Safari)) => {
+            pick_rand(rng, STATIC_SAFARI_MAC_AGENTS)
+        }
+        // Mobile / Tablet (cross-OS lists since Safari mobile = iOS family)
+        (_, Some(FormFactor::Mobile), Some(Browser::Safari)) => {
+            pick_rand(rng, STATIC_SAFARI_MOBILE_AGENTS)
+        }
+        (_, Some(FormFactor::Tablet), Some(Browser::Safari)) => {
+            pick_rand(rng, STATIC_SAFARI_TABLET_AGENTS)
+        }
+        // Any Safari fallback → global Safari list
+        (_, _, Some(Browser::Safari)) => pick_rand(rng, STATIC_SAFARI_AGENTS),
+
+        // IE: until IE lists are generated, fall back to mixed static
+        _ => pick_rand(rng, STATIC_AGENTS),
+    }
+}
+
+/* -------------------------
+All-agents aggregate
+------------------------- */
 
 /// Returns a combined vector containing all user-agents from various predefined static categories.
 pub fn all_static_agents() -> &'static Vec<&'static str> {
     static AGENTS: std::sync::OnceLock<Vec<&'static str>> = std::sync::OnceLock::new();
-
     AGENTS.get_or_init(|| {
         STATIC_AGENTS
             .iter()
+            // Chrome groups
             .chain(STATIC_CHROME_AGENTS.iter())
             .chain(STATIC_CHROME_MAC_AGENTS.iter())
             .chain(STATIC_CHROME_LINUX_AGENTS.iter())
             .chain(STATIC_CHROME_MOBILE_AGENTS.iter())
             .chain(STATIC_CHROME_TABLET_AGENTS.iter())
+            // Firefox groups
+            .chain(STATIC_FIREFOX_AGENTS.iter())
+            .chain(STATIC_FIREFOX_WINDOWS_AGENTS.iter())
+            .chain(STATIC_FIREFOX_MAC_AGENTS.iter())
+            .chain(STATIC_FIREFOX_LINUX_AGENTS.iter())
+            .chain(STATIC_FIREFOX_MOBILE_AGENTS.iter())
+            .chain(STATIC_FIREFOX_TABLET_AGENTS.iter())
+            // Safari groups
+            .chain(STATIC_SAFARI_AGENTS.iter())
+            .chain(STATIC_SAFARI_MAC_AGENTS.iter())
+            .chain(STATIC_SAFARI_MOBILE_AGENTS.iter())
+            .chain(STATIC_SAFARI_TABLET_AGENTS.iter())
             .copied()
             .collect()
     })
 }
 
 /// Returns a random user-agent from all predefined static categories.
-/// Generally you do not want to use this unless you have a setup that can at hand use any of the agents.
+/// Generally you do not want to use this unless you can handle any agent.
 pub fn spoof_random_agent(thread_rng: &mut Rng) -> &'static str {
     let agents = all_static_agents();
     agents[thread_rng.usize(..agents.len())]
 }
+
+/* -------------------------
+Dynamic list container
+------------------------- */
 
 /// Structure to manage a dynamic list of User-Agents, with quick lookup capabilities.
 #[derive(Default, Clone)]
@@ -153,7 +486,7 @@ impl UserAgents {
         }
     }
 
-    /// Returns a random user agent from the dynamic list.
+    /// Returns a random user agent from the dynamic list (falls back to static).
     pub fn spoof(&self) -> &str {
         if self.list.is_empty() {
             spoof_ua()
@@ -162,13 +495,28 @@ impl UserAgents {
         }
     }
 
-    /// Returns a random user agent from the dynamic list.
+    /// Returns a random user agent from the dynamic list (falls back to static).
     pub fn spoof_with_randomizer(&self, thread_rng: &mut Rng) -> &str {
         if self.list.is_empty() {
             spoof_ua()
         } else {
             &self.list[thread_rng.usize(..self.list.len())]
         }
+    }
+}
+
+/* -------------------------
+Internal helpers
+------------------------- */
+
+#[inline]
+fn pick_rand<'a>(rng: Option<&mut Rng>, candidates: &'a [&'a str]) -> &'a str {
+    if candidates.is_empty() {
+        return "";
+    }
+    match rng {
+        Some(r) => candidates[r.usize(..candidates.len())],
+        None => candidates[fastrand::usize(..candidates.len())],
     }
 }
 
@@ -243,6 +591,47 @@ mod tests {
         assert_eq!(
             ua_instance.list_map.get(&Rc::new("Agent3".to_string())),
             Some(&1)
+        );
+    }
+
+    #[test]
+    fn test_spoof_by_fallbacks() {
+        // Should pull from the per-OS desktop lists when available
+        let _ = spoof_by(
+            Some(Os::Windows),
+            Some(FormFactor::Desktop),
+            Some(Browser::Chrome),
+            None,
+        );
+        let _ = spoof_by(
+            Some(Os::Mac),
+            Some(FormFactor::Desktop),
+            Some(Browser::Chrome),
+            None,
+        );
+        let _ = spoof_by(
+            Some(Os::Linux),
+            Some(FormFactor::Desktop),
+            Some(Browser::Chrome),
+            None,
+        );
+
+        // Mobile/tablet lists exist cross-OS
+        let _ = spoof_by(None, Some(FormFactor::Mobile), Some(Browser::Chrome), None);
+        let _ = spoof_by(None, Some(FormFactor::Tablet), Some(Browser::Chrome), None);
+
+        // Firefox/IE fall back to STATIC_AGENTS unless you add specific lists later
+        let _ = spoof_by(
+            Some(Os::Windows),
+            Some(FormFactor::Desktop),
+            Some(Browser::Firefox),
+            None,
+        );
+        let _ = spoof_by(
+            Some(Os::Windows),
+            Some(FormFactor::Desktop),
+            Some(Browser::Ie),
+            None,
         );
     }
 }
