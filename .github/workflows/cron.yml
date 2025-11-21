@@ -2,6 +2,7 @@ name: Update Crate
 on:
   schedule:
     - cron: "0 0 * * 0" # every Sunday at midnight
+  workflow_dispatch: {}
 env:
   CARGO_TERM_COLOR: always
 
@@ -29,6 +30,12 @@ jobs:
         run: |
           if ! command -v cargo-release &> /dev/null; then
             cargo install cargo-release
+          fi
+
+      - name: Install cargo-edit
+        run: |
+          if ! command -v cargo-set-version &> /dev/null; then
+            cargo install cargo-edit
           fi
 
       - name: Build & run
