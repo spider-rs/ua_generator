@@ -107,6 +107,43 @@ pub fn spoof_chrome_linux_ua_with_randomizer(thread_rng: &mut Rng) -> &'static s
     pick_rand(Some(thread_rng), STATIC_CHROME_LINUX_AGENTS)
 }
 
+/// Desktop agents.
+pub fn desktop_agents() -> &'static [&'static str] {
+    let v = [
+        STATIC_CHROME_WINDOWS_AGENTS,
+        STATIC_CHROME_MAC_AGENTS,
+        STATIC_CHROME_LINUX_AGENTS,
+        STATIC_FIREFOX_WINDOWS_AGENTS,
+        STATIC_FIREFOX_MAC_AGENTS,
+        STATIC_FIREFOX_LINUX_AGENTS,
+        STATIC_SAFARI_MAC_AGENTS,
+    ]
+    .concat();
+    Box::leak(v.into_boxed_slice())
+}
+
+/// Mobile agents.
+pub fn mobile_agents() -> &'static [&'static str] {
+    let v = [
+        STATIC_CHROME_MOBILE_AGENTS,
+        STATIC_FIREFOX_MOBILE_AGENTS,
+        STATIC_SAFARI_MOBILE_AGENTS,
+    ]
+    .concat();
+    Box::leak(v.into_boxed_slice())
+}
+
+/// Tablet agents.
+pub fn tablet_agents() -> &'static [&'static str] {
+    let v = [
+        STATIC_CHROME_TABLET_AGENTS,
+        STATIC_FIREFOX_TABLET_AGENTS,
+        STATIC_SAFARI_TABLET_AGENTS,
+    ]
+    .concat();
+    Box::leak(v.into_boxed_slice())
+}
+
 /// Slices for each generated family (zero-copy, no alloc).
 #[inline]
 pub fn chrome_agents() -> &'static [&'static str] {
@@ -367,6 +404,15 @@ pub fn spoof_by(
         // Any Safari fallback → global Safari list
         (_, _, Some(Browser::Safari)) => pick_rand(rng, STATIC_SAFARI_AGENTS),
 
+        // --- FormFactor match only ---
+        // Desktop
+        (_, Some(FormFactor::Desktop), _) => pick_rand(rng, desktop_agents()),
+        // Mobile
+        (_, Some(FormFactor::Mobile), _) => pick_rand(rng, mobile_agents()),
+        // Tablet
+        (_, Some(FormFactor::Tablet), _) => pick_rand(rng, tablet_agents()),
+
+        // --- Fall Back ---
         // IE: until IE lists are generated, fall back to mixed static
         _ => pick_rand(rng, STATIC_AGENTS),
     }
@@ -633,5 +679,10 @@ mod tests {
             Some(Browser::Ie),
             None,
         );
+
+        // FormFactor-only
+        let _ = spoof_by(None, Some(FormFactor::Desktop), None, None);
+        let _ = spoof_by(None, Some(FormFactor::Mobile), None, None);
+        let _ = spoof_by(None, Some(FormFactor::Tablet), None, None);
     }
 }
