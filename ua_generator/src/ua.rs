@@ -564,7 +564,7 @@ mod tests {
         assert!(
             Rc::ptr_eq(
                 agent3_rc,
-                &ua_instance
+                ua_instance
                     .list_map
                     .iter()
                     .find_map(|(rc, _)| if **rc == "Agent3" { Some(rc) } else { None })
