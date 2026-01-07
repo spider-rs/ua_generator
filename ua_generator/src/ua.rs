@@ -367,6 +367,37 @@ pub fn spoof_by(
         // Any Safari fallback → global Safari list
         (_, _, Some(Browser::Safari)) => pick_rand(rng, STATIC_SAFARI_AGENTS),
 
+        // --- FormFactor match only ---
+        (_, Some(FormFactor::Desktop), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_WINDOWS_AGENTS,
+                STATIC_CHROME_MAC_AGENTS,
+                STATIC_CHROME_LINUX_AGENTS,
+                STATIC_FIREFOX_WINDOWS_AGENTS,
+                STATIC_FIREFOX_MAC_AGENTS,
+                STATIC_FIREFOX_LINUX_AGENTS,
+                STATIC_SAFARI_MAC_AGENTS,
+            ],
+        ),
+        (_, Some(FormFactor::Mobile), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_MOBILE_AGENTS,
+                STATIC_FIREFOX_MOBILE_AGENTS,
+                STATIC_SAFARI_MOBILE_AGENTS,
+            ],
+        ),
+        (_, Some(FormFactor::Tablet), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_TABLET_AGENTS,
+                STATIC_FIREFOX_TABLET_AGENTS,
+                STATIC_SAFARI_TABLET_AGENTS,
+            ],
+        ),
+
+        // --- Fall Back ---
         // IE: until IE lists are generated, fall back to mixed static
         _ => pick_rand(rng, STATIC_AGENTS),
     }
@@ -520,6 +551,30 @@ fn pick_rand<'a>(rng: Option<&mut Rng>, candidates: &'a [&'a str]) -> &'a str {
     }
 }
 
+/// Pick randomly across multiple candidate slices without allocating.
+#[inline]
+fn pick_rand_multi<'a>(rng: Option<&mut Rng>, groups: &[&'a [&'a str]]) -> &'a str {
+    let total: usize = groups.iter().map(|g| g.len()).sum();
+    if total == 0 {
+        return "";
+    }
+
+    let mut idx = match rng {
+        Some(r) => r.usize(..total),
+        None => fastrand::usize(..total),
+    };
+
+    for g in groups {
+        if idx < g.len() {
+            return g[idx];
+        }
+        idx -= g.len();
+    }
+
+    // unreachable if `total` computed correctly
+    ""
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -564,7 +619,7 @@ mod tests {
         assert!(
             Rc::ptr_eq(
                 agent3_rc,
-                &ua_instance
+                ua_instance
                     .list_map
                     .iter()
                     .find_map(|(rc, _)| if **rc == "Agent3" { Some(rc) } else { None })
@@ -633,5 +688,10 @@ mod tests {
             Some(Browser::Ie),
             None,
         );
+
+        // FormFactor-only
+        let _ = spoof_by(None, Some(FormFactor::Desktop), None, None);
+        let _ = spoof_by(None, Some(FormFactor::Mobile), None, None);
+        let _ = spoof_by(None, Some(FormFactor::Tablet), None, None);
     }
 }

@@ -7,7 +7,7 @@
 //!
 //!
 //! - **Generate** get a random UA to use.
-//!   - [`spoof_ua`]: ua/fn.spoof_ua.html
+//!   - [`spoof_ua`][]: ua/fn.spoof_ua.html
 //!
 //! # Basic usage
 //!
