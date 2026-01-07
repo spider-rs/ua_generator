@@ -107,43 +107,6 @@ pub fn spoof_chrome_linux_ua_with_randomizer(thread_rng: &mut Rng) -> &'static s
     pick_rand(Some(thread_rng), STATIC_CHROME_LINUX_AGENTS)
 }
 
-/// Desktop agents.
-pub fn desktop_agents() -> &'static [&'static str] {
-    let v = [
-        STATIC_CHROME_WINDOWS_AGENTS,
-        STATIC_CHROME_MAC_AGENTS,
-        STATIC_CHROME_LINUX_AGENTS,
-        STATIC_FIREFOX_WINDOWS_AGENTS,
-        STATIC_FIREFOX_MAC_AGENTS,
-        STATIC_FIREFOX_LINUX_AGENTS,
-        STATIC_SAFARI_MAC_AGENTS,
-    ]
-    .concat();
-    Box::leak(v.into_boxed_slice())
-}
-
-/// Mobile agents.
-pub fn mobile_agents() -> &'static [&'static str] {
-    let v = [
-        STATIC_CHROME_MOBILE_AGENTS,
-        STATIC_FIREFOX_MOBILE_AGENTS,
-        STATIC_SAFARI_MOBILE_AGENTS,
-    ]
-    .concat();
-    Box::leak(v.into_boxed_slice())
-}
-
-/// Tablet agents.
-pub fn tablet_agents() -> &'static [&'static str] {
-    let v = [
-        STATIC_CHROME_TABLET_AGENTS,
-        STATIC_FIREFOX_TABLET_AGENTS,
-        STATIC_SAFARI_TABLET_AGENTS,
-    ]
-    .concat();
-    Box::leak(v.into_boxed_slice())
-}
-
 /// Slices for each generated family (zero-copy, no alloc).
 #[inline]
 pub fn chrome_agents() -> &'static [&'static str] {
@@ -404,13 +367,35 @@ pub fn spoof_by(
         // Any Safari fallback → global Safari list
         (_, _, Some(Browser::Safari)) => pick_rand(rng, STATIC_SAFARI_AGENTS),
 
-        // --- FormFactor match only ---
-        // Desktop
-        (_, Some(FormFactor::Desktop), _) => pick_rand(rng, desktop_agents()),
-        // Mobile
-        (_, Some(FormFactor::Mobile), _) => pick_rand(rng, mobile_agents()),
-        // Tablet
-        (_, Some(FormFactor::Tablet), _) => pick_rand(rng, tablet_agents()),
+        // --- FormFactor match only (NO ALLOC, NO LEAK) ---
+        (_, Some(FormFactor::Desktop), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_WINDOWS_AGENTS,
+                STATIC_CHROME_MAC_AGENTS,
+                STATIC_CHROME_LINUX_AGENTS,
+                STATIC_FIREFOX_WINDOWS_AGENTS,
+                STATIC_FIREFOX_MAC_AGENTS,
+                STATIC_FIREFOX_LINUX_AGENTS,
+                STATIC_SAFARI_MAC_AGENTS,
+            ],
+        ),
+        (_, Some(FormFactor::Mobile), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_MOBILE_AGENTS,
+                STATIC_FIREFOX_MOBILE_AGENTS,
+                STATIC_SAFARI_MOBILE_AGENTS,
+            ],
+        ),
+        (_, Some(FormFactor::Tablet), _) => pick_rand_multi(
+            rng,
+            &[
+                STATIC_CHROME_TABLET_AGENTS,
+                STATIC_FIREFOX_TABLET_AGENTS,
+                STATIC_SAFARI_TABLET_AGENTS,
+            ],
+        ),
 
         // --- Fall Back ---
         // IE: until IE lists are generated, fall back to mixed static
@@ -564,6 +549,30 @@ fn pick_rand<'a>(rng: Option<&mut Rng>, candidates: &'a [&'a str]) -> &'a str {
         Some(r) => candidates[r.usize(..candidates.len())],
         None => candidates[fastrand::usize(..candidates.len())],
     }
+}
+
+/// Pick randomly across multiple candidate slices without allocating.
+#[inline]
+fn pick_rand_multi<'a>(rng: Option<&mut Rng>, groups: &[&'a [&'a str]]) -> &'a str {
+    let total: usize = groups.iter().map(|g| g.len()).sum();
+    if total == 0 {
+        return "";
+    }
+
+    let mut idx = match rng {
+        Some(r) => r.usize(..total),
+        None => fastrand::usize(..total),
+    };
+
+    for g in groups {
+        if idx < g.len() {
+            return g[idx];
+        }
+        idx -= g.len();
+    }
+
+    // unreachable if `total` computed correctly
+    ""
 }
 
 #[cfg(test)]
