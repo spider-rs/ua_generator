@@ -1,6 +1,6 @@
 [package]
 name = "ua_generator"
-version = "0.5.48"
+version = "0.5.49"
 edition = "2021"
 authors = ["j-mendez <jeff@spider.cloud>"]
 description = "Random User Agent Spoofer in Rust."
