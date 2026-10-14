@@ -15,6 +15,8 @@ pub use crate::safari_mobile_ua_list::STATIC_SAFARI_MOBILE_AGENTS;
 pub use crate::safari_tablet_ua_list::STATIC_SAFARI_TABLET_AGENTS;
 pub use crate::safari_ua_list::STATIC_SAFARI_AGENTS;
 pub use crate::ua_list::STATIC_AGENTS;
+pub use crate::ua_versions::{NEWEST_CHROME_MAJOR, NEWEST_FIREFOX_MAJOR, NEWEST_SAFARI_MAJOR};
+pub use crate::version_window::{family_major, Family};
 
 use fastrand::{self, Rng};
 use std::collections::HashMap;
@@ -55,6 +57,39 @@ pub enum Browser {
     Ie,
     /// Safari
     Safari,
+}
+
+/// The newest Chrome major in the data the lists were generated from.
+///
+/// Every Chrome entry in the lists is within [`Family::window`] of it, so a
+/// consumer that must stay current can floor its own picks at
+/// `newest_chrome_major() - Family::Chrome.window()`.
+pub const fn newest_chrome_major() -> u32 {
+    NEWEST_CHROME_MAJOR
+}
+
+/// The newest Firefox major in the data the lists were generated from.
+pub const fn newest_firefox_major() -> u32 {
+    NEWEST_FIREFOX_MAJOR
+}
+
+/// The newest Safari major in the data the lists were generated from.
+pub const fn newest_safari_major() -> u32 {
+    NEWEST_SAFARI_MAJOR
+}
+
+/// The newest major the lists carry for `family`, as [`version_window::Newest`](crate::version_window::Newest).
+pub const fn newest_majors() -> crate::version_window::Newest {
+    crate::version_window::Newest {
+        chrome: Some(NEWEST_CHROME_MAJOR),
+        firefox: Some(NEWEST_FIREFOX_MAJOR),
+        safari: Some(NEWEST_SAFARI_MAJOR),
+    }
+}
+
+/// The major version `ua` claims for its family, if it names one.
+pub fn ua_major(ua: &str) -> Option<u32> {
+    family_major(ua).map(|(_, major)| major)
 }
 
 /// Get a random UA from a static precompiled list.
@@ -647,6 +682,95 @@ mod tests {
             ua_instance.list_map.get(&Rc::new("Agent3".to_string())),
             Some(&1)
         );
+    }
+
+    /// Every generated list, by name.
+    fn every_list() -> [(&'static str, &'static [&'static str]); 17] {
+        [
+            ("STATIC_AGENTS", STATIC_AGENTS),
+            ("STATIC_CHROME_AGENTS", STATIC_CHROME_AGENTS),
+            ("STATIC_CHROME_WINDOWS_AGENTS", STATIC_CHROME_WINDOWS_AGENTS),
+            ("STATIC_CHROME_MAC_AGENTS", STATIC_CHROME_MAC_AGENTS),
+            ("STATIC_CHROME_LINUX_AGENTS", STATIC_CHROME_LINUX_AGENTS),
+            ("STATIC_CHROME_MOBILE_AGENTS", STATIC_CHROME_MOBILE_AGENTS),
+            ("STATIC_CHROME_TABLET_AGENTS", STATIC_CHROME_TABLET_AGENTS),
+            ("STATIC_FIREFOX_AGENTS", STATIC_FIREFOX_AGENTS),
+            (
+                "STATIC_FIREFOX_WINDOWS_AGENTS",
+                STATIC_FIREFOX_WINDOWS_AGENTS,
+            ),
+            ("STATIC_FIREFOX_MAC_AGENTS", STATIC_FIREFOX_MAC_AGENTS),
+            ("STATIC_FIREFOX_LINUX_AGENTS", STATIC_FIREFOX_LINUX_AGENTS),
+            ("STATIC_FIREFOX_MOBILE_AGENTS", STATIC_FIREFOX_MOBILE_AGENTS),
+            ("STATIC_FIREFOX_TABLET_AGENTS", STATIC_FIREFOX_TABLET_AGENTS),
+            ("STATIC_SAFARI_AGENTS", STATIC_SAFARI_AGENTS),
+            ("STATIC_SAFARI_MAC_AGENTS", STATIC_SAFARI_MAC_AGENTS),
+            ("STATIC_SAFARI_MOBILE_AGENTS", STATIC_SAFARI_MOBILE_AGENTS),
+            ("STATIC_SAFARI_TABLET_AGENTS", STATIC_SAFARI_TABLET_AGENTS),
+        ]
+    }
+
+    /// No generated list is empty, and every entry in every list is within
+    /// its family's window of the newest major in `ua_versions`, or, for a
+    /// list the data source serves stale as a whole, of the list's own newest.
+    #[test]
+    fn every_list_is_current_and_non_empty() {
+        use crate::version_window::list_conforms;
+        let newest = newest_majors();
+        for (name, list) in every_list() {
+            assert!(!list.is_empty(), "{name} is empty");
+            assert!(
+                list_conforms(list, &newest),
+                "{name} carries an entry outside the version window: {list:?}"
+            );
+        }
+    }
+
+    /// The recorded newest majors are real ceilings: no entry anywhere is
+    /// newer than them, and some list carries the newest Chrome major, which
+    /// is what a consumer flooring at
+    /// `newest_chrome_major() - Family::Chrome.window()` relies on.
+    #[test]
+    fn newest_majors_are_the_lists_ceiling() {
+        assert!(newest_chrome_major() > 0);
+        assert!(newest_firefox_major() > 0);
+        assert!(newest_safari_major() > 0);
+        let mut seen_chrome_newest = false;
+        for (name, list) in every_list() {
+            for ua in list {
+                if let Some((family, major)) = family_major(ua) {
+                    let newest = newest_majors().get(family).unwrap();
+                    assert!(
+                        major <= newest,
+                        "{name}: {ua} is newer than the recorded newest"
+                    );
+                    if family == Family::Chrome && major == newest {
+                        seen_chrome_newest = true;
+                    }
+                }
+            }
+        }
+        assert!(
+            seen_chrome_newest,
+            "no list carries the newest Chrome major"
+        );
+    }
+
+    /// Every spoof function still returns an entry of its list.
+    #[test]
+    fn spoof_functions_draw_from_their_lists() {
+        for _ in 0..32 {
+            assert!(STATIC_AGENTS.contains(&spoof_ua()));
+            assert!(STATIC_CHROME_AGENTS.contains(&spoof_chrome_ua()));
+            assert!(STATIC_CHROME_MAC_AGENTS.contains(&spoof_chrome_mac_ua()));
+            assert!(STATIC_CHROME_LINUX_AGENTS.contains(&spoof_chrome_linux_ua()));
+            assert!(STATIC_CHROME_MOBILE_AGENTS.contains(&spoof_chrome_mobile_ua()));
+            assert!(STATIC_CHROME_TABLET_AGENTS.contains(&spoof_chrome_tablet_ua()));
+            assert!(STATIC_FIREFOX_AGENTS.contains(&spoof_firefox_ua()));
+            assert!(STATIC_SAFARI_AGENTS.contains(&spoof_safari_ua()));
+            assert!(STATIC_SAFARI_MAC_AGENTS.contains(&spoof_safari_mac_ua()));
+        }
+        assert!(ua_major(spoof_chrome_ua()).is_some());
     }
 
     #[test]
