@@ -756,6 +756,83 @@ mod tests {
         );
     }
 
+    /// Every device list holds only its browser on its form factor, current
+    /// against the recorded newest majors, and is what the generator would
+    /// write again from it.
+    #[test]
+    fn device_lists_are_the_right_browser_and_current() {
+        use crate::version_window::{device_list, within_window, DeviceList};
+        let newest = newest_majors();
+        for (name, list, kind) in [
+            (
+                "STATIC_CHROME_MOBILE_AGENTS",
+                STATIC_CHROME_MOBILE_AGENTS,
+                DeviceList::ChromeMobile,
+            ),
+            (
+                "STATIC_CHROME_TABLET_AGENTS",
+                STATIC_CHROME_TABLET_AGENTS,
+                DeviceList::ChromeTablet,
+            ),
+            (
+                "STATIC_FIREFOX_MOBILE_AGENTS",
+                STATIC_FIREFOX_MOBILE_AGENTS,
+                DeviceList::FirefoxMobile,
+            ),
+            (
+                "STATIC_FIREFOX_TABLET_AGENTS",
+                STATIC_FIREFOX_TABLET_AGENTS,
+                DeviceList::FirefoxTablet,
+            ),
+            (
+                "STATIC_SAFARI_MOBILE_AGENTS",
+                STATIC_SAFARI_MOBILE_AGENTS,
+                DeviceList::SafariMobile,
+            ),
+            (
+                "STATIC_SAFARI_TABLET_AGENTS",
+                STATIC_SAFARI_TABLET_AGENTS,
+                DeviceList::SafariTablet,
+            ),
+        ] {
+            assert!(!list.is_empty(), "{name} is empty");
+            let family = kind.family();
+            let top = newest.get(family).unwrap();
+            for ua in list {
+                assert!(kind.accepts(ua), "{name}: {ua} is not {kind:?}");
+                let (f, major) = family_major(ua).unwrap();
+                assert_eq!(f, family, "{name}: {ua} parses to {f:?}");
+                assert!(
+                    within_window(family, top, major),
+                    "{name}: {ua} is outside {}..={top}",
+                    top - family.window()
+                );
+            }
+            let again = device_list(list, kind, &newest);
+            assert_eq!(
+                again,
+                list.iter().map(|s| s.to_string()).collect::<Vec<_>>()
+            );
+        }
+        for ua in STATIC_CHROME_MOBILE_AGENTS {
+            let major = ua_major(ua).unwrap();
+            assert!((NEWEST_CHROME_MAJOR - 2..=NEWEST_CHROME_MAJOR).contains(&major));
+        }
+        for ua in STATIC_SAFARI_MOBILE_AGENTS
+            .iter()
+            .chain(STATIC_SAFARI_TABLET_AGENTS)
+        {
+            assert!(
+                !ua.contains("Chrome/"),
+                "desktop Chrome in a Safari list: {ua}"
+            );
+            assert!(
+                !ua.contains("Macintosh"),
+                "desktop Safari in an iOS list: {ua}"
+            );
+        }
+    }
+
     /// Every spoof function still returns an entry of its list.
     #[test]
     fn spoof_functions_draw_from_their_lists() {
