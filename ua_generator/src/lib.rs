@@ -55,5 +55,9 @@ pub mod safari_ua_list;
 pub mod ua;
 /// Auto generated latest User Agents for windows, mac, linux, and android.
 pub mod ua_list;
+/// Auto generated newest browser majors the lists were windowed against.
+pub mod ua_versions;
+/// The browser major version window every list is held to.
+pub mod version_window;
 
 pub extern crate fastrand;
