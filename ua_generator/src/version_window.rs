@@ -9,7 +9,7 @@
 //! This file is compiled twice: as `ua_generator::version_window` for
 //! consumers and tests, and by `build.rs` (through `#[path]`) at list
 //! generation time, so the rule that writes the lists and the rule the tests
-//! check are the same code. It therefore depends on nothing but `core`.
+//! check are the same code. It therefore depends on nothing outside `std`.
 
 /// A browser family the window applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -185,6 +185,188 @@ pub fn list_conforms<S: AsRef<str>>(list: &[S], newest: &Newest) -> bool {
     list.iter().all(|s| is_current(s.as_ref(), &local))
 }
 
+/// The frozen OS token Safari sends on iOS 26 and iPadOS 26 and later.
+///
+/// Safari 26 stopped reporting the real OS version and pins it instead. It
+/// shipped as `18_6`, and WebKit then aligned every Apple platform on `18_7`,
+/// a value it says will not change again. See WebKit bug 298260, comments 9
+/// and 10: <https://bugs.webkit.org/show_bug.cgi?id=298260>. The `Version/N`
+/// token still carries the real Safari major.
+pub const IOS_SAFARI_FROZEN_OS: &str = "18_7";
+
+/// The Android version Firefox for Android entries are synthesized with.
+///
+/// Firefox for Android reports the real Android version in its platform
+/// token: <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent/Firefox>.
+pub const FIREFOX_ANDROID_VERSION: &str = "15";
+
+/// A device list: one browser family on one form factor.
+///
+/// The data source sometimes answers a device query with entries for the
+/// wrong device (desktop Chrome for an iPhone Safari query) or with entries
+/// many majors behind the desktop ones. [`device_list`] drops the entries
+/// that are not the right browser on the right device, and when nothing
+/// current is left, writes current entries in the format the real browser
+/// sends.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum DeviceList {
+    /// Chrome on an Android phone, or on an iPhone (`CriOS`).
+    ChromeMobile,
+    /// Chrome on an Android tablet, or on an iPad (`CriOS`).
+    ChromeTablet,
+    /// Firefox on an Android phone, or on an iPhone (`FxiOS`).
+    FirefoxMobile,
+    /// Firefox on an Android tablet, or on an iPad (`FxiOS`).
+    FirefoxTablet,
+    /// Safari on an iPhone.
+    SafariMobile,
+    /// Safari on an iPad.
+    SafariTablet,
+}
+
+/// Tokens of browsers built on the same engine that a device list must not
+/// carry, since each list stands for one browser.
+const OTHER_BROWSERS: &[&str] = &[
+    "EdgA/",
+    "EdgiOS/",
+    "OPR/",
+    "OPiOS/",
+    "SamsungBrowser/",
+    "YaBrowser/",
+    "GSA/",
+];
+
+impl DeviceList {
+    /// Every device list.
+    pub const ALL: [DeviceList; 6] = [
+        DeviceList::ChromeMobile,
+        DeviceList::ChromeTablet,
+        DeviceList::FirefoxMobile,
+        DeviceList::FirefoxTablet,
+        DeviceList::SafariMobile,
+        DeviceList::SafariTablet,
+    ];
+
+    /// The browser family every entry of the list belongs to.
+    pub const fn family(self) -> Family {
+        match self {
+            DeviceList::ChromeMobile | DeviceList::ChromeTablet => Family::Chrome,
+            DeviceList::FirefoxMobile | DeviceList::FirefoxTablet => Family::Firefox,
+            DeviceList::SafariMobile | DeviceList::SafariTablet => Family::Safari,
+        }
+    }
+
+    /// Whether `ua` is this list's browser on this list's device.
+    pub fn accepts(self, ua: &str) -> bool {
+        match family_major(ua) {
+            Some((family, _)) if family == self.family() => {}
+            _ => return false,
+        }
+        if OTHER_BROWSERS.iter().any(|t| ua.contains(t)) {
+            return false;
+        }
+        let android = ua.contains("Android");
+        match self {
+            DeviceList::ChromeMobile => {
+                (android && ua.contains(" Mobile Safari/"))
+                    || (ua.contains("(iPhone;") && ua.contains("CriOS/"))
+            }
+            DeviceList::ChromeTablet => {
+                (android && ua.contains("Chrome/") && !ua.contains("Mobile"))
+                    || (ua.contains("(iPad;") && ua.contains("CriOS/"))
+            }
+            DeviceList::FirefoxMobile => {
+                (android && ua.contains("; Mobile;"))
+                    || (ua.contains("(iPhone;") && ua.contains("FxiOS/"))
+            }
+            DeviceList::FirefoxTablet => {
+                (android && ua.contains("; Tablet;"))
+                    || (ua.contains("(iPad;") && ua.contains("FxiOS/"))
+            }
+            // family_major already sends anything with Chrome/, CriOS/,
+            // Firefox/ or FxiOS/ to another family, so a desktop Chrome or
+            // Chrome on iOS string never gets here.
+            DeviceList::SafariMobile => ua.contains("(iPhone;") && ua.contains(" Mobile/"),
+            DeviceList::SafariTablet => ua.contains("(iPad;") && ua.contains(" Mobile/"),
+        }
+    }
+
+    /// One entry in the format the real browser sends, for `major`.
+    pub fn entry(self, major: u32) -> String {
+        match self {
+            // Chrome's reduced User-Agent, which is what Chrome on Android
+            // sends: the platform is frozen to `Linux; Android 10; K`, the
+            // version is `<major>.0.0.0`, and the `Mobile` token is present
+            // on phones and absent on tablets. See "Reduced User Agent
+            // String Reference", "Mobile and Tablet":
+            // <https://www.chromium.org/updates/ua-reduction/#reduced-user-agent-string-reference>.
+            DeviceList::ChromeMobile => format!(
+                "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{major}.0.0.0 Mobile Safari/537.36"
+            ),
+            DeviceList::ChromeTablet => format!(
+                "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{major}.0.0.0 Safari/537.36"
+            ),
+            // Firefox for Android: `Mobile` or `Tablet` in the platform
+            // token, and the Gecko trail equal to the Firefox version. See
+            // the "Firefox for Android" section of
+            // <https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/User-Agent/Firefox>.
+            DeviceList::FirefoxMobile => format!(
+                "Mozilla/5.0 (Android {FIREFOX_ANDROID_VERSION}; Mobile; rv:{major}.0) Gecko/{major}.0 Firefox/{major}.0"
+            ),
+            DeviceList::FirefoxTablet => format!(
+                "Mozilla/5.0 (Android {FIREFOX_ANDROID_VERSION}; Tablet; rv:{major}.0) Gecko/{major}.0 Firefox/{major}.0"
+            ),
+            // Safari on iOS and iPadOS 26 and later, with the OS token
+            // frozen (see IOS_SAFARI_FROZEN_OS) and Version/ carrying the
+            // real Safari major.
+            DeviceList::SafariMobile => format!(
+                "Mozilla/5.0 (iPhone; CPU iPhone OS {IOS_SAFARI_FROZEN_OS} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{major}.0 Mobile/15E148 Safari/604.1"
+            ),
+            DeviceList::SafariTablet => format!(
+                "Mozilla/5.0 (iPad; CPU OS {IOS_SAFARI_FROZEN_OS} like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/{major}.0 Mobile/15E148 Safari/604.1"
+            ),
+        }
+    }
+
+    /// One entry per major in the family's window below `newest`, newest
+    /// first.
+    pub fn synthesize(self, newest: u32) -> Vec<String> {
+        let oldest = newest.saturating_sub(self.family().window());
+        (oldest..=newest).rev().map(|m| self.entry(m)).collect()
+    }
+}
+
+/// The entries of a fetched device list to ship.
+///
+/// Entries that are not `kind`'s browser on `kind`'s device are dropped.
+/// Of the rest, the ones current against `newest` are kept. When none is
+/// current, the list is written from scratch with [`DeviceList::synthesize`]
+/// against the family's newest major. Only when `newest` has no major for
+/// the family does the list fall back to [`filter_current`] over its valid
+/// entries, which can be empty when nothing valid came back.
+pub fn device_list<S: AsRef<str>>(items: &[S], kind: DeviceList, newest: &Newest) -> Vec<String> {
+    let valid: Vec<&str> = items
+        .iter()
+        .map(AsRef::as_ref)
+        .filter(|ua| kind.accepts(ua))
+        .collect();
+    let current: Vec<String> = valid
+        .iter()
+        .filter(|ua| is_current(ua, newest))
+        .map(|ua| ua.to_string())
+        .collect();
+    if !current.is_empty() {
+        return current;
+    }
+    match newest.get(kind.family()) {
+        Some(n) => kind.synthesize(n),
+        None => filter_current(&valid, newest)
+            .into_iter()
+            .map(|ua| ua.to_string())
+            .collect(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -314,5 +496,124 @@ mod tests {
         assert_eq!(kept, vec![IE_11]);
         assert!(!list_conforms(&items, &newest));
         assert!(!list_conforms::<&str>(&[], &newest));
+    }
+
+    #[test]
+    fn device_lists_reject_the_wrong_browser_or_device() {
+        let android_chrome_131 = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36";
+        let android_tablet_148 = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36";
+        let mac_chrome_155 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36";
+        let win_firefox_157 =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:157.0) Gecko/20100101 Firefox/157.0";
+        let android_firefox_130 =
+            "Mozilla/5.0 (Android 14; Mobile; rv:130.0) Gecko/130.0 Firefox/130.0";
+        let iphone_safari = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1";
+        let iphone_edge = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 EdgiOS/141.0.3537.71 Mobile/15E148 Safari/605.1.15";
+
+        assert!(DeviceList::ChromeMobile.accepts(android_chrome_131));
+        assert!(DeviceList::ChromeMobile.accepts(IOS_CHROME_131));
+        assert!(!DeviceList::ChromeMobile.accepts(android_tablet_148));
+        assert!(!DeviceList::ChromeMobile.accepts(mac_chrome_155));
+        assert!(DeviceList::ChromeTablet.accepts(android_tablet_148));
+        assert!(!DeviceList::ChromeTablet.accepts(android_chrome_131));
+        assert!(!DeviceList::ChromeTablet.accepts(mac_chrome_155));
+
+        assert!(DeviceList::FirefoxMobile.accepts(android_firefox_130));
+        assert!(DeviceList::FirefoxMobile.accepts(IOS_FIREFOX_130));
+        assert!(!DeviceList::FirefoxMobile.accepts(win_firefox_157));
+        assert!(!DeviceList::FirefoxTablet.accepts(win_firefox_157));
+        assert!(!DeviceList::FirefoxTablet.accepts(mac_chrome_155));
+        assert!(!DeviceList::FirefoxTablet.accepts(android_firefox_130));
+
+        assert!(DeviceList::SafariMobile.accepts(iphone_safari));
+        assert!(!DeviceList::SafariMobile.accepts(iphone_edge));
+        assert!(!DeviceList::SafariMobile.accepts(IOS_CHROME_131));
+        assert!(!DeviceList::SafariMobile.accepts(IOS_FIREFOX_130));
+        assert!(!DeviceList::SafariMobile.accepts(mac_chrome_155));
+        assert!(!DeviceList::SafariMobile.accepts(MAC_SAFARI_26));
+        assert!(!DeviceList::SafariTablet.accepts(iphone_safari));
+        assert!(!DeviceList::SafariTablet.accepts(MAC_SAFARI_26));
+    }
+
+    #[test]
+    fn synthesized_entries_match_the_reference_formats() {
+        assert_eq!(
+            DeviceList::ChromeMobile.entry(155),
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Mobile Safari/537.36"
+        );
+        assert_eq!(
+            DeviceList::ChromeTablet.entry(155),
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36"
+        );
+        assert_eq!(
+            DeviceList::SafariMobile.entry(27),
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+        );
+        assert_eq!(
+            DeviceList::SafariTablet.entry(27),
+            "Mozilla/5.0 (iPad; CPU OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+        );
+        assert_eq!(
+            DeviceList::FirefoxTablet.entry(157),
+            "Mozilla/5.0 (Android 15; Tablet; rv:157.0) Gecko/157.0 Firefox/157.0"
+        );
+        for kind in DeviceList::ALL {
+            let entries = kind.synthesize(155);
+            assert_eq!(entries.len() as u32, kind.family().window() + 1);
+            for (i, ua) in entries.iter().enumerate() {
+                assert!(kind.accepts(ua), "{kind:?} rejects its own entry {ua}");
+                assert_eq!(family_major(ua), Some((kind.family(), 155 - i as u32)));
+            }
+        }
+    }
+
+    #[test]
+    fn device_list_keeps_current_entries_and_synthesizes_otherwise() {
+        let newest = Newest {
+            chrome: Some(155),
+            firefox: Some(157),
+            safari: Some(27),
+        };
+        let android_154 = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Mobile Safari/537.36";
+        let android_131 = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36";
+
+        // A current entry survives; the stale and the desktop ones go.
+        assert_eq!(
+            device_list(
+                &[android_131, android_154, WIN_CHROME_154],
+                DeviceList::ChromeMobile,
+                &newest
+            ),
+            vec![android_154.to_string()]
+        );
+        // Nothing current: synthesized at newest-2..newest.
+        assert_eq!(
+            device_list(
+                &[android_131, IOS_CHROME_131],
+                DeviceList::ChromeMobile,
+                &newest
+            ),
+            DeviceList::ChromeMobile.synthesize(155)
+        );
+        // Desktop strings served for an iPhone Safari query.
+        assert_eq!(
+            device_list(
+                &[WIN_CHROME_154, MAC_SAFARI_26],
+                DeviceList::SafariMobile,
+                &newest
+            ),
+            DeviceList::SafariMobile.synthesize(27)
+        );
+        // A synthesized list is a fixed point.
+        for kind in DeviceList::ALL {
+            let n = newest.get(kind.family()).unwrap();
+            let list = kind.synthesize(n);
+            assert_eq!(device_list(&list, kind, &newest), list);
+        }
+        // No newest for the family: whatever valid entries came back.
+        assert_eq!(
+            device_list(&[android_131], DeviceList::ChromeMobile, &Newest::default()),
+            vec![android_131.to_string()]
+        );
     }
 }

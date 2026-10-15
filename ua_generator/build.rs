@@ -9,7 +9,7 @@ mod version_window;
 
 #[cfg(feature = "fetch")]
 mod ua_build {
-    use super::version_window::{filter_current, Newest};
+    use super::version_window::{device_list, filter_current, DeviceList, Newest};
     use std::borrow::Cow;
     use std::fmt::Write as _;
     use std::fs;
@@ -650,24 +650,31 @@ mod ua_build {
         fs::write(out_path, buf).map_err(|e| format!("write const file failed: {e}"))
     }
 
-    /// The `ua_versions.rs` module: one `u32` const per family with the
-    /// newest major every list was windowed against, and the window widths.
-    /// A family the fetch never saw keeps the value from the current file,
-    /// so a partial data source never zeroes a consumer's floor.
-    fn write_versions(out_path: impl AsRef<Path>, newest: &Newest) -> Result<(), String> {
-        let current = fs::read_to_string(out_path.as_ref()).unwrap_or_default();
-        let keep = |name: &str| -> u32 {
+    /// `newest` with each family the fetch never saw taken from the current
+    /// `ua_versions.rs`, so a partial data source never zeroes a consumer's
+    /// floor or leaves a device list with nothing to synthesize against.
+    fn resolve_newest(versions_path: impl AsRef<Path>, newest: &Newest) -> Newest {
+        let current = fs::read_to_string(versions_path.as_ref()).unwrap_or_default();
+        let keep = |name: &str| -> Option<u32> {
             current
                 .lines()
                 .find_map(|l| l.trim().strip_prefix(&format!("pub const {name}: u32 = ")))
                 .and_then(|rest| rest.trim_end_matches(';').trim().parse().ok())
-                .unwrap_or(0)
+                .filter(|&m| m > 0)
         };
-        let chrome = newest.chrome.unwrap_or_else(|| keep("NEWEST_CHROME_MAJOR"));
-        let firefox = newest
-            .firefox
-            .unwrap_or_else(|| keep("NEWEST_FIREFOX_MAJOR"));
-        let safari = newest.safari.unwrap_or_else(|| keep("NEWEST_SAFARI_MAJOR"));
+        Newest {
+            chrome: newest.chrome.or_else(|| keep("NEWEST_CHROME_MAJOR")),
+            firefox: newest.firefox.or_else(|| keep("NEWEST_FIREFOX_MAJOR")),
+            safari: newest.safari.or_else(|| keep("NEWEST_SAFARI_MAJOR")),
+        }
+    }
+
+    /// The `ua_versions.rs` module: one `u32` const per family with the
+    /// newest major every list was windowed against.
+    fn write_versions(out_path: impl AsRef<Path>, newest: &Newest) -> Result<(), String> {
+        let chrome = newest.chrome.unwrap_or(0);
+        let firefox = newest.firefox.unwrap_or(0);
+        let safari = newest.safari.unwrap_or(0);
         let mut buf = String::new();
         let _ = writeln!(
             buf,
@@ -685,6 +692,21 @@ mod ua_build {
         let _ = writeln!(buf, "/// Newest Safari major in the fetched data.");
         let _ = writeln!(buf, "pub const NEWEST_SAFARI_MAJOR: u32 = {safari};");
         fs::write(out_path, buf).map_err(|e| format!("write versions file failed: {e}"))
+    }
+
+    /// The device list an output holds, if it is one.
+    fn device_kind(spec: &OutputSpec) -> Option<DeviceList> {
+        use outputs::*;
+        [
+            (CHROME_MOBILE, DeviceList::ChromeMobile),
+            (CHROME_TABLET, DeviceList::ChromeTablet),
+            (FIREFOX_MOBILE, DeviceList::FirefoxMobile),
+            (FIREFOX_TABLET, DeviceList::FirefoxTablet),
+            (SAFARI_MOBILE, DeviceList::SafariMobile),
+            (SAFARI_TABLET, DeviceList::SafariTablet),
+        ]
+        .into_iter()
+        .find_map(|(o, kind)| (o == *spec).then_some(kind))
     }
 
     fn escape_str(s: &str) -> Cow<'_, str> {
@@ -848,13 +870,14 @@ mod ua_build {
             listed.push((grp.output, fetch_by_query(&client, &grp.query)?));
         }
 
-        let newest = Newest::from_uas(
+        let fetched = Newest::from_uas(
             static_items
                 .iter()
                 .chain(sampled.iter().flat_map(|(_, v)| v.iter()))
                 .chain(listed.iter().flat_map(|(_, v)| v.iter()))
                 .map(String::as_str),
         );
+        let newest = resolve_newest(src(outputs::VERSIONS_PATH), &fetched);
         println!(
             "cargo:warning=ua window: chrome={:?} firefox={:?} safari={:?}",
             newest.chrome, newest.firefox, newest.safari
@@ -887,12 +910,17 @@ mod ua_build {
         }
 
         for (spec, items) in &listed {
-            write_const_str_slice(
-                src(spec.rel_src_path),
-                spec.const_name,
-                &windowed(items),
-                spec.doc,
-            )?;
+            // A device list is held to its browser and form factor, and is
+            // written from the reference format when the feed has nothing
+            // current for it (see version_window::device_list).
+            let kept = match device_kind(spec) {
+                Some(kind) => device_list(items, kind, &newest),
+                None => windowed(items),
+            };
+            if kept.is_empty() {
+                return Err(format!("{} would be written empty", spec.const_name));
+            }
+            write_const_str_slice(src(spec.rel_src_path), spec.const_name, &kept, spec.doc)?;
             // mirror your original behavior: bump after list files
             bump_minor_version();
         }
