@@ -4,6 +4,6 @@
 /// Newest Chrome major in the fetched data.
 pub const NEWEST_CHROME_MAJOR: u32 = 155;
 /// Newest Firefox major in the fetched data.
-pub const NEWEST_FIREFOX_MAJOR: u32 = 157;
+pub const NEWEST_FIREFOX_MAJOR: u32 = 158;
 /// Newest Safari major in the fetched data.
 pub const NEWEST_SAFARI_MAJOR: u32 = 27;
